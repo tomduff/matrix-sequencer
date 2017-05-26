@@ -8,13 +8,13 @@ Initial simple implementation of a 3 track programmable pattern sequencer using 
   + Click - Cycle through Play Modes, currently Forwards, Backwards, Random
   + Hold (~2s) - Make Track 1 the active editing track
 + 2/Density
-  + Rotate - Move the cursor
-  + Click - Invert the state of the step (on/off)
+  + Rotate - Move the edit cursor
+  + Click - Invert the state of the step under the cursor (on/off)
   + Hold (~2s) - Make Track 2 the active editing track
 + 3/Offset
   + Rotate - Offset in the steps in the direction turned. Note - steps outside the current length remain in place.
   + Click - Cycle through Output Modes, currently Trigger (~10ms pulse), Clock (match clock width), Gate
-  + Hold (~2s) - Make Track 2 the active editing track
+  + Hold (~2s) - Make Track 3 the active editing track
 
 ## Outputs
 + 1 - As programmed on Track 1
