@@ -3,19 +3,13 @@
 
 #include "HardwareInterface.h"
 #include "Io.h"
-
-enum OutMode {
-  Trigger,
-  Gate,
-  Clock
-};
+#include "Tracks.h"
 
 class Output : public HardwareInterface {
 public:
   Output(int io);
   virtual void initialise();
-  int signal(Signal signal, int step);
-  void setMode(OutMode outMode);
+  int signal(Signal signal, OutMode mode, int step);
 private:
   int pin;
   OutMode mode;

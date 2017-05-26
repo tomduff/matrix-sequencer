@@ -11,7 +11,7 @@ void Output::initialise() {
 		pinMode(pin, OUTPUT);
 }
 
-int Output::signal(Signal signal, int step) {
+int Output::signal(Signal signal, OutMode mode, int step) {
 	int out = LOW;
 	switch(mode) {
 		case Trigger:
@@ -41,8 +41,4 @@ int Output::handleTrigger(Signal signal) {
 	}
 
 	return out;
-}
-
-void Output::setMode(OutMode outMode) {
-	mode = outMode;
 }
