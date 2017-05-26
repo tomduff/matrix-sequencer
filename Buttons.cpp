@@ -9,7 +9,7 @@
 
 
 Buttons::Buttons()
-  : holdStart(0), oldButton(Control::NONE) {
+  : holdStart(0), oldButton(Control::NoControl) {
 }
 
 void Buttons::initialise() {
@@ -21,17 +21,17 @@ ControlEvent Buttons::event() {
 
 ControlEvent Buttons::readState() {
 
-  ControlEvent state = ControlEvent{Control::NONE, ControlType::BUTTON, ButtonState::RELEASED};
+  ControlEvent state = ControlEvent{Control::NoControl, ControlType::ButtonControl, ButtonState::Released};
   Control currentButton = readButton();
 
   // A new button has been clicked so start the hold timer
-  if (currentButton != Control::NONE && (oldButton == Control::NONE || oldButton != currentButton))  {
+  if (currentButton != Control::NoControl && (oldButton == Control::NoControl || oldButton != currentButton))  {
     holdStart = millis();
   }
   // If a button is now released then a state change has occurred
-  else if (currentButton == Control::NONE && oldButton != Control::NONE) {
+  else if (currentButton == Control::NoControl && oldButton != Control::NoControl) {
     state.control = oldButton;
-    state.state = isHeld() ? ButtonState::HELD : ButtonState::CLICKED;
+    state.state = isHeld() ? ButtonState::Held : ButtonState::Clicked;
     holdStart = 0;
   }
 
@@ -40,11 +40,11 @@ ControlEvent Buttons::readState() {
 }
 
 Control Buttons::readButton() {
-  Control button = Control::NONE;
+  Control button = Control::NoControl;
   int reading = analogRead(BUTTON_PIN);
-  if (reading > SWITCH_THREE ) button = Control::THREE;
-  else if (reading > SWITCH_ONE) button = Control::ONE;
-  else if (reading > SWITCH_TWO) button = Control::TWO;
+  if (reading > SWITCH_THREE ) button = Control::Three;
+  else if (reading > SWITCH_ONE) button = Control::One;
+  else if (reading > SWITCH_TWO) button = Control::Two;
   return button;
 }
 

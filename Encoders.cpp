@@ -21,19 +21,19 @@ void Encoders::initialise() {
 }
 
 ControlEvent Encoders::event() {
-  ControlEvent event = ControlEvent{Control::NONE, ControlType::ENCODER, EncoderState::STOPPED};
+  ControlEvent event = ControlEvent{Control::NoControl, ControlType::EncoderControl, EncoderState::Stopped};
 
   EncoderState state = read(one);
-  if (state != EncoderState::STOPPED) {
-    event = ControlEvent{Control::ONE, ControlType::ENCODER, state};
+  if (state != EncoderState::Stopped) {
+    event = ControlEvent{Control::One, ControlType::EncoderControl, state};
   } else {
     state = read(two);
-    if (state != EncoderState::STOPPED) {
-      event = ControlEvent{Control::TWO, ControlType::ENCODER, state};
+    if (state != EncoderState::Stopped) {
+      event = ControlEvent{Control::Two, ControlType::EncoderControl, state};
     } else {
       state = read(three);
-      if (state != EncoderState::STOPPED) {
-        event = ControlEvent{Control::THREE, ControlType::ENCODER, state};
+      if (state != EncoderState::Stopped) {
+        event = ControlEvent{Control::Three, ControlType::EncoderControl, state};
       }
     }
   }
@@ -42,15 +42,15 @@ ControlEvent Encoders::event() {
 }
 
 EncoderState Encoders::read(Encoder &encoder) {
-  EncoderState result = EncoderState::STOPPED;
+  EncoderState result = EncoderState::Stopped;
   int reading = encoder.read();
-  if (reading < EncoderState::DECREMENT) {
-    result = EncoderState::DECREMENT;
-    encoder.write(EncoderState::STOPPED);
+  if (reading < EncoderState::Decrement) {
+    result = EncoderState::Decrement;
+    encoder.write(EncoderState::Stopped);
   }
-  else if (reading > EncoderState::INCREMENT) {
-    result = EncoderState::INCREMENT;
-    encoder.write(EncoderState::STOPPED);
+  else if (reading > EncoderState::Increment) {
+    result = EncoderState::Increment;
+    encoder.write(EncoderState::Stopped);
   }
   return result;
 }

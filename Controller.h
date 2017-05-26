@@ -4,27 +4,24 @@
 #include "HardwareInterface.h"
 
 enum Control {
-  ONE = 0,
-  TWO = 1,
-  THREE = 2,
-  NONE = 99
+  One = 0,
+  Two = 1,
+  Three = 2,
+  NoControl = 99
 };
-
 enum ControlType {
-  ENCODER,
-  BUTTON
+  EncoderControl,
+  ButtonControl
 };
-
 enum EncoderState {
-  STOPPED = 0,
-  INCREMENT = 1,
-  DECREMENT = -1
+  Stopped = 0,
+  Increment = 1,
+  Decrement = -1
 };
-
 enum ButtonState {
-  RELEASED = 0,
-  CLICKED = 1,
-  HELD = 2
+  Released = 0,
+  Clicked = 1,
+  Held = 2
 };
 
 struct ControlEvent {
