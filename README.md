@@ -1,6 +1,6 @@
 # matrix-sequencer
 
-Initial simple implementation of a 3 track programmable pattern sequencer using the SYNSI Euclidean Sequencer hardware and inspired by Tom Whitwell's Euclidean Sequencer initially described [on MuffWiggler](https://www.muffwiggler.com/forum/viewtopic.php?t=45485&start=all&postdays=0&postorder=asc)
+Initial simple implementation of a 3 track programmable pattern sequencer using the [SYINSI Euclidean Sequencer hardware](http://syinsi.com/shop/modules/euclidean-built/) and inspired by Tom Whitwell's Euclidean Sequencer initially described [on MuffWiggler](https://www.muffwiggler.com/forum/viewtopic.php?t=45485&start=all&postdays=0&postorder=asc)
 
 ## Controls
 + 1/Length
