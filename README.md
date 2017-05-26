@@ -2,35 +2,35 @@
 
 Initial simple implementation of a 3 track programmable pattern sequencer using the SYNSI Euclidean Sequencer hardware and inspired by Tom Whitwell's Euclidean Sequencer initially described [on MuffWiggler](https://www.muffwiggler.com/forum/viewtopic.php?t=45485&start=all&postdays=0&postorder=asc)
 
-##Controls
+## Controls
 + 1/Length
-..+ Rotate - Change length 1 - 16 steps
-..+ Click - Cycle through Play Modes, currently Forwards, Backwards, Random
-..+ Hold (~2s) - Make Track 1 the active editing track
+  + Rotate - Change length 1 - 16 steps
+  + Click - Cycle through Play Modes, currently Forwards, Backwards, Random
+  + Hold (~2s) - Make Track 1 the active editing track
 + 2/Density
-..+ Rotate - Move the cursor
-..+ Click - Invert the state of the step (on/off)
-..+ Hold (~2s) - Make Track 2 the active editing track
+  + Rotate - Move the cursor
+  + Click - Invert the state of the step (on/off)
+  + Hold (~2s) - Make Track 2 the active editing track
 + 3/Offset
-..+ Rotate - Offset in the direction turned. note this applied to steps within the current length, steps parts the length remain in place.
-..+ Click - Cycle through Output Modes, currently Trigger (~10ms pulse), Clock (match clock width), Gate
-..+ Hold (~2s) - Make Track 2 the active editing track
+  + Rotate - Offset in the steps in the direction turned. Note - steps outside the current length remain in place.
+  + Click - Cycle through Output Modes, currently Trigger (~10ms pulse), Clock (match clock width), Gate
+  + Hold (~2s) - Make Track 2 the active editing track
 
-##Outputs
+## Outputs
 + 1 - As programmed on Track 1
 + 2 - As programmed on Track 2
 + 3 - As programmed on Track 3
 + Offbeat - Inverse of Track 1
 
 ## Guidance
+This is a work in progress!
 + display reverts to a play view after ~5 seconds of not twiddling knobs
 + Saving of changes (if there are any) occurs when you switch edit mode or when the display reverts to the play view
-+ sync resets on the rising edge only
-+ This is a work in progress!
++ sync resets on the rising edge
 
-# The Future
+## The Future
 If I can work out how to set up the controls so that it makes sense
-+ Configurable sync behaviour; rising or falling edge, reset and hold while high
-+ More Play Modes; pendulum and variations on, random direction rather than step
-+ Divider per track
++ Configurable sync behaviour; rising or falling edge, reset and hold while high.
++ More Play Modes; pendulum and variations on, random direction rather than step.
++ Set a clock divider for a track
 + I'm open to ideas
