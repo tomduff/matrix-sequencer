@@ -1,6 +1,6 @@
 # matrix-sequencer
 
-Initial simple implementation of a 3 track programmable pattern sequencer using the [SYINSI Euclidean Sequencer hardware](http://syinsi.com/shop/modules/euclidean-built/) and inspired by Tom Whitwell's Euclidean Sequencer initially described [on MuffWiggler](https://www.muffwiggler.com/forum/viewtopic.php?t=45485&start=all&postdays=0&postorder=asc)
+Initial simple implementation of a 3 track programmable pattern sequencer using the [SYINSI Euclidean Sequencer hardware](http://syinsi.com/shop/modules/euclidean-built/) and inspired by Tom Whitwell's Euclidean Sequencer as described [on MuffWiggler](https://www.muffwiggler.com/forum/viewtopic.php?t=45485&start=all&postdays=0&postorder=asc)
 
 ## Controls
 + 1/Length
@@ -29,8 +29,9 @@ This is a work in progress!
 + sync resets on the rising edge
 
 ## The Future
-If I can work out how to set up the controls so that it makes sense
+If I can work out how to set up the controls so additional editing modes can be accessed:
 + Configurable sync behaviour; rising or falling edge, reset and hold while high.
-+ More Play Modes; pendulum and variations on, random direction rather than step.
++ More Play Modes; pendulum and variations on, random direction and random output as well as step.
 + Set a clock divider for a track
++ Add the Euclidean functionality so that a track can be Euclidean or programmed
 + I'm open to ideas

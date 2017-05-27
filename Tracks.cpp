@@ -40,8 +40,24 @@ void Tracks::setPlayMode(int track, PlayMode mode) {
   change = true;
 }
 
+void Tracks::nextPlayMode(int track) {
+  int mode = (int)settings.tracks[track].play;
+  ++mode;
+  Utilities::cycle(mode, PlayMode::Forward, PlayMode::Random);
+  settings.tracks[track].play = (PlayMode) mode;
+  change = true;
+}
+
 void Tracks::setOutMode(int track, OutMode mode) {
   settings.tracks[track].out = mode;
+  change = true;
+}
+
+void Tracks::nextOutMode(int track) {
+  int mode = (int)settings.tracks[track].out;
+  ++mode;
+  Utilities::cycle(mode, OutMode::Trigger, OutMode::Gate);
+  settings.tracks[track].out = (OutMode) mode;
   change = true;
 }
 

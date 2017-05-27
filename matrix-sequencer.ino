@@ -7,14 +7,6 @@
 #include "Tracks.h"
 #include "Utilities.h"
 
-#define INDICATOR_ROW 7
-#define CLOCK_INDICATOR 0
-#define RESET_INDICATOR 1
-#define TRACK_ONE_INDICATOR 2
-#define TRACK_TWO_INDICATOR 5
-#define TRACK_THREE_INDICATOR 7
-#define OFF_BEAT_INDICATOR 3
-
 Display display = Display();
 Encoders encoders = Encoders();
 Buttons buttons = Buttons();
@@ -65,38 +57,43 @@ void loop() {
     clearEditAction();
   }
 
-  playView();
+  drawTracks();
 
   display.render();
 }
 
 void handleReset(Signal signal) {
   if(signal == Signal::Rising) tracks.reset();
-  display.setLed(INDICATOR_ROW, RESET_INDICATOR, (signal == Signal::Rising));
+  if (signal == Signal::Rising || signal == Signal::High) display.indicateReset();
 }
 
 void handleClock(Signal signal) {
   if (signal == Signal::Rising) tracks.stepOn();
-  handleStep(signal, tracks.getStep(0), tracks.getOutMode(0), TRACK_ONE_INDICATOR, &oneOut);
-  handleStep(signal, tracks.getStep(1), tracks.getOutMode(1), TRACK_TWO_INDICATOR, &twoOut);
-  handleStep(signal, tracks.getStep(2), tracks.getOutMode(2), TRACK_THREE_INDICATOR, &threeOut);
-  handleStep(signal, !tracks.getStep(0), tracks.getOutMode(0), OFF_BEAT_INDICATOR, &offOut);
-  display.setLed(INDICATOR_ROW, CLOCK_INDICATOR, (signal == Signal::Rising || signal == Signal::High));
+  if (signal == Signal::Rising || signal == Signal::High) display.indicateClock();
+
+  handleStep(signal, 0, &oneOut);
+  handleStep(signal, 1, &twoOut);
+  handleStep(signal, 2, &threeOut);
+  handleStep(signal, 3, &offOut);
 }
 
-void handleStep(Signal signal, int step, OutMode mode, int led, Output* out) {
-  int output = out->signal(signal, mode, step);
-  display.setLed(INDICATOR_ROW, led, output);
+void handleStep(Signal signal, int track, Output* out) {
+  int step = 0;
+  if (track == 3) step = !tracks.getStep(0);
+  else step = tracks.getStep(track);
+  int output = out->signal(signal, tracks.getOutMode(track), step);
+  if (output) display.indicateTrack(track);
 }
 
 void handleEvent(ControlEvent event) {
+  if (event.control != Control::NoControl) lastEdit = millis();
   switch(event.control) {
     case Control::One:
       if (event.type == ControlType::EncoderControl) {
         handleLengthEdit(event.state);
       } else if (event.type == ControlType::ButtonControl) {
-        handlePlayModeEdit();
         if(event.state == ButtonState::Clicked) {
+          handlePlayModeEdit();
         } else if (event.state == ButtonState::Held) {
           active = event.control;
         }
@@ -105,19 +102,23 @@ void handleEvent(ControlEvent event) {
     case Control::Two:
       if (event.type == ControlType::EncoderControl) {
         handlePatternCursor(event.state);
-      } else if(event.state == ButtonState::Clicked) {
-        handlePatternEdit();
-      } else if (event.state == ButtonState::Held) {
-        active = event.control;
+      } else if (event.type == ControlType::ButtonControl) {
+        if(event.state == ButtonState::Clicked) {
+          handlePatternEdit();
+        } else if (event.state == ButtonState::Held) {
+          active = event.control;
+        }
       }
       break;
     case Control::Three:
       if (event.type == ControlType::EncoderControl) {
         handleOffsetEdit(event.state);
-      } else if (event.state == ButtonState::Clicked) {
-        handleOutModeEdit();
-      } else if (event.state == ButtonState::Held) {
-        active = event.control;
+      } else if (event.type == ControlType::ButtonControl) {
+        if (event.state == ButtonState::Clicked) {
+          handleOutModeEdit();
+        } else if (event.state == ButtonState::Held) {
+          active = event.control;
+        }
       }
       break;
     case Control::NoControl:
@@ -127,7 +128,6 @@ void handleEvent(ControlEvent event) {
 
 void setEditAction(EditAction current) {
   tracks.save();
-  lastEdit = millis();
   action = current;
 }
 
@@ -149,14 +149,14 @@ void handleLengthEdit(int change) {
   }  else {
     tracks.setLength(active, change);
   }
-  lengthView();
+  display.drawLengthView(active, tracks.getLength(active));
 }
 
 void handlePatternCursor(int change) {
   if (action != EditAction::EditPattern) {
     cursor = 0;
     setEditAction(EditAction::EditPattern);
-    patternView();
+    display.drawPatternView(active, tracks.getPattern(active));
   } else {
     moveCursor(change, tracks.getLength(active));
   }
@@ -172,7 +172,7 @@ void handlePatternEdit() {
     tracks.updatePattern(active, cursor);
   }
   drawCursor();
-  patternView();
+  display.drawPatternView(active, tracks.getPattern(active));
 }
 
 void handleOffsetEdit(int change) {
@@ -182,35 +182,27 @@ void handleOffsetEdit(int change) {
   } else {
     tracks.applyOffset(active, change);
   }
-  offsetView();
+  display.drawPatternView(active, tracks.getPattern(active));
 }
 
 void handlePlayModeEdit() {
   if (action != EditAction::EditPlayMode) {
-    cursor = tracks.getPlayMode(active);
     display.hideCursor();
     setEditAction(EditAction::EditPlayMode);
   } else {
-    moveCursor(1, 2);
-    tracks.setPlayMode(active, (PlayMode) cursor);
+    tracks.nextPlayMode(active);
   }
-  playModeView();
+  display.drawPlayModeView(active, tracks.getPlayMode(active));
 }
 
 void handleOutModeEdit() {
   if (action != EditAction::EditOutMode) {
-    cursor = tracks.getPlayMode(active);
     display.hideCursor();
     setEditAction(EditAction::EditOutMode);
   } else {
-    moveCursor(1, 2);
-    tracks.setOutMode(active, (OutMode) cursor);
+    tracks.nextOutMode(active);
   }
-  outModeView();
-}
-
-void lengthView() {
-  display.drawRowsBar(active * 2, tracks.getLength(active));
+  display.drawOutModeView(active, tracks.getOutMode(active));
 }
 
 void drawCursor() {
@@ -218,37 +210,10 @@ void drawCursor() {
   display.drawRowsCursor(active * 2, cursor);
 }
 
-void patternView() {
-  display.drawRowsPattern(active * 2, tracks.getPattern(active));
-}
-
-void offsetView() {
-  patternView();
-}
-
-void playModeView() {
-  display.drawRowIndicator(active * 2, tracks.getPlayMode(active));
-  display.drawRowPattern(active * 2 + 1, 0);
-}
-
-void outModeView() {
-  display.drawRowPattern(active * 2, 0);
-  display.drawRowsIndicator(active * 2 + 1, tracks.getOutMode(active));
-}
-
-void playView() {
+void drawTracks() {
   for(int track = 0; track < 3; ++track) {
     if(track != active || action == EditAction::NoAction) {
-      int pattern = 0;
-      int position = tracks.getPosition(track);
-      if (position <= 7) {
-        pattern = lowByte(tracks.getPattern(track));
-        bitSet(pattern, position + 8);
-      } else {
-        pattern = highByte(tracks.getPattern(track));
-        bitSet(pattern, position);
-      }
-      display.drawRowsPattern(track * 2, pattern);
+      display.drawPlayView(track, tracks.getPosition(track), tracks.getPattern(track));
     }
   }
 }

@@ -3,10 +3,18 @@
 
 #include "HardwareInterface.h"
 #include "Matrix.h"
+#include "Tracks.h"
 #include <LedControl.h>
 
 struct DisplayRow {
   byte state = 0;
+};
+
+struct Indicator {
+  int row;
+  int column;
+  bool active;
+  unsigned long start;
 };
 
 struct Cursor {
@@ -23,29 +31,36 @@ public:
   void render();
   void showCursor();
   void hideCursor();
-  void drawRowIndicator(int row, int position);
-  void drawRowsIndicator(int row, int position);
-  void drawRowBar(int row, int length);
-  void drawRowsBar(int row, int length);
-  void drawRowCursor(int row, int position);
+  void drawPatternView(int track, int pattern);
+  void drawLengthView(int track, int length);
+  void drawPlayModeView(int track, PlayMode mode);
+  void drawOutModeView(int track, OutMode mode);
+  void drawPlayView(int track, int position, int pattern);
   void drawRowsCursor(int row, int position);
-  void drawRowPattern(int row, byte pattern);
-  void drawRowsPattern(int row, int pattern);
-  void setLed(int row, int column, bool state);
+  void indicateReset();
+  void indicateClock();
+  void indicateTrack(int track);
 private:
+  void showIndicator(Indicator& indicator);
+  void updateIndicators();
+  void updateIndicator(Indicator& indicator);
+  void drawRowCursor(int row, int position);
   bool hasCursorMoved();
   void updateCursor();
   void animation();
   void showSmileyFace();
   void showInverseSmileyFace();
   void fill(int &value, int length);
-  //void setLed(int row, int column, bool state);
   void setRow(int row, byte state);
-  void setRows(int row, unsigned int state);
+  void setRows(int row, int state);
+  void setLed(int row, int column, bool state);
   DisplayRow currentDisplay[8];
   DisplayRow nextDisplay[8];
   Cursor currentCursor;
   Cursor nextCursor;
+  Indicator clock;
+  Indicator reset;
+  Indicator tracks[4];
   Matrix matrix = Matrix();
   unsigned long cursorTime = 0;
   bool cursorState = true;

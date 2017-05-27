@@ -36,7 +36,9 @@ public:
   void applyOffset(int track, int offset);
   void setLength(int track, int offset);
   void setPlayMode(int track, PlayMode mode);
+  void nextPlayMode(int track);
   void setOutMode(int track, OutMode mode);
+  void nextOutMode(int track);
   int getLength(int track);
   int getPattern(int track);
   int getPosition(int position);
