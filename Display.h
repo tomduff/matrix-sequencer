@@ -17,6 +17,12 @@ struct Indicator {
   unsigned long start;
 };
 
+struct TrackIndicator {
+  int track = 0;
+  bool active = false;
+  unsigned long start = 0;
+};
+
 struct Cursor {
   int row = 0;
   int position = 0;
@@ -40,10 +46,12 @@ public:
   void indicateReset();
   void indicateClock();
   void indicateTrack(int track);
+  void indicateActiveTrack(int track);
 private:
   void showIndicator(Indicator& indicator);
   void updateIndicators();
   void updateIndicator(Indicator& indicator);
+  void updateTrackIndicator(TrackIndicator& indicator);
   void drawRowCursor(int row, int position);
   bool hasCursorMoved();
   void updateCursor();
@@ -61,6 +69,7 @@ private:
   Indicator clock;
   Indicator reset;
   Indicator tracks[4];
+  TrackIndicator activeTrack;
   Matrix matrix = Matrix();
   unsigned long cursorTime = 0;
   bool cursorState = true;

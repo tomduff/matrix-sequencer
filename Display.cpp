@@ -4,6 +4,7 @@
 #define row(t) (t * 2)
 
 #define INDICATOR_TIME 25
+#define ROW_INDICATOR_TIME 200
 #define INDICATOR_ROW 7
 #define CLOCK_INDICATOR 0
 #define RESET_INDICATOR 1
@@ -163,6 +164,12 @@ void Display::indicateTrack(int track) {
   showIndicator(tracks[track]);
 }
 
+void Display::indicateActiveTrack(int track) {
+  activeTrack.track = track;
+  activeTrack.active = true;
+  activeTrack.start = millis();
+}
+
 void Display::showIndicator(Indicator& indicator) {
     indicator.active = true;
     indicator.start = millis();
@@ -175,6 +182,16 @@ void Display::updateIndicator(Indicator& indicator) {
       indicator.start = 0;
     }
     setLed(indicator.row, indicator.column, indicator.active);
+  }
+}
+
+  if (indicator.active) {
+    if (indicator.start == 0 || (millis() - indicator.start > ROW_INDICATOR_TIME)) {
+      indicator.active = false;
+      indicator.start = 0;
+    }
+    setRow(row(indicator.track), indicator.active ? ALL_ON : ALL_OFF);
+    setRow(row(indicator.track) + 1, indicator.active ? ALL_ON : ALL_OFF);
   }
 }
 

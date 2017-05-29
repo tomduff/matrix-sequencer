@@ -126,6 +126,7 @@ void handleButtonHeld(Control control) {
   active = control;
   cursor = 0;
   clearEditAction();
+  display.indicateActiveTrack(active);
 }
 
 void setEditAction(EditAction current) {
