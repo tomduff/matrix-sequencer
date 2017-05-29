@@ -68,7 +68,7 @@ int Tracks::getLength(int track) {
 int Tracks::getPattern(int track) {
     int pattern = 0;
     if( track < 3 ) {
-      int pattern = settings.tracks[track].pattern;
+      pattern = settings.tracks[track].pattern;
       for (int i = settings.tracks[track].length + 1; i <= MAX_STEP_INDEX; ++i) bitClear(pattern, i);
     } else {
       pattern = ~getPattern(0);
@@ -77,7 +77,7 @@ int Tracks::getPattern(int track) {
 }
 
 int Tracks::getPosition(int track) {
-    return track < 3 ? settings.tracks[track].position : getPosition(0);
+  return track < 3 ? settings.tracks[track].position : getPosition(0);
 }
 
 int Tracks::getStep(int track) {
