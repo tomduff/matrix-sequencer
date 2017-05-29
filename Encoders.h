@@ -4,11 +4,22 @@
 #include "Controller.h"
 #include <Encoder.h>
 
+enum EncoderState {
+  Stopped = 0,
+  Increment = 1,
+  Decrement = -1
+};
+
+struct EncoderEvent {
+  Control control;
+  EncoderState state;
+};
+
 class Encoders : public Controller {
 public:
   Encoders();
   virtual void initialise();
-  virtual ControlEvent event();
+  EncoderEvent event();
 private:
   Encoder one, two, three;
   EncoderState read(Encoder& encoder);

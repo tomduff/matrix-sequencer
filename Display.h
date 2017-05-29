@@ -47,7 +47,7 @@ private:
   void drawRowCursor(int row, int position);
   bool hasCursorMoved();
   void updateCursor();
-  void animation();
+  void simley();
   void showSmileyFace();
   void showInverseSmileyFace();
   void fill(int &value, int length);

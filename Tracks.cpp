@@ -62,29 +62,34 @@ void Tracks::nextOutMode(int track) {
 }
 
 int Tracks::getLength(int track) {
-    return settings.tracks[track].length;
+    return track < 3 ? settings.tracks[track].length : getLength(0);
 }
 
 int Tracks::getPattern(int track) {
-    int pattern = settings.tracks[track].pattern;
-    for (int i = settings.tracks[track].length + 1; i <= MAX_STEP_INDEX; ++i) bitClear(pattern, i);
+    int pattern = 0;
+    if( track < 3 ) {
+      int pattern = settings.tracks[track].pattern;
+      for (int i = settings.tracks[track].length + 1; i <= MAX_STEP_INDEX; ++i) bitClear(pattern, i);
+    } else {
+      pattern = ~getPattern(0);
+    }
     return pattern;
 }
 
 int Tracks::getPosition(int track) {
-    return settings.tracks[track].position;
+    return track < 3 ? settings.tracks[track].position : getPosition(0);
 }
 
 int Tracks::getStep(int track) {
-  return bitRead(settings.tracks[track].pattern, settings.tracks[track].position);
+  return track < 3 ? bitRead(settings.tracks[track].pattern, settings.tracks[track].position) : !getStep(0);
 }
 
 PlayMode Tracks::getPlayMode(int track) {
-  return settings.tracks[track].play;
+  return track < 3 ? settings.tracks[track].play : getPlayMode(0);
 }
 
 OutMode Tracks::getOutMode(int track) {
-  return settings.tracks[track].out;
+  return track < 3 ? settings.tracks[track].out: getOutMode(0);
 }
 
 void Tracks::stepOn() {
@@ -110,7 +115,7 @@ void Tracks::stepOn(Track* track) {
       Utilities::cycle(track->position, 0, track->length);
     break;
     case Random:
-      track->position  = random(0, track->length + 1);
+      track->position = random(0, track->length + 1);
     break;
   }
 }
@@ -132,5 +137,4 @@ void Tracks::initialise() {
   settings.tracks[1] = {MAX_STEP_INDEX, 0, 0, PlayMode::Forward, OutMode::Trigger};
   settings.tracks[2] = {MAX_STEP_INDEX, 0, 0, PlayMode::Forward, OutMode::Trigger};
   settings.version = CONFIG_VERSION;
-
 }

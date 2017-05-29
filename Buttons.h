@@ -3,14 +3,25 @@
 
 #include "Controller.h"
 
+enum ButtonState {
+  Released = 0,
+  Clicked = 1,
+  Held = 2
+};
+
+struct ButtonEvent {
+  Control control;
+  ButtonState state;
+};
+
 class Buttons : public Controller {
 public:
   Buttons();
   virtual void initialise();
-  virtual ControlEvent event();
+  ButtonEvent event();
   bool isHeld();
 private:
-  ControlEvent readState();
+  ButtonEvent readState();
   Control readButton();
   unsigned long holdStart;
   Control oldButton;

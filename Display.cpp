@@ -21,22 +21,19 @@
 
 
 Display::Display()
-  : clock{INDICATOR_ROW, CLOCK_INDICATOR, false, 0},
-    reset{INDICATOR_ROW, RESET_INDICATOR, false, 0},
-    tracks{{INDICATOR_ROW, TRACK_ONE_INDICATOR, false, 0},
-      {INDICATOR_ROW, TRACK_TWO_INDICATOR, false, 0},
-      {INDICATOR_ROW, TRACK_THREE_INDICATOR, false, 0},
-      {INDICATOR_ROW, OFF_BEAT_INDICATOR, false, 0}} {
+  : clock{INDICATOR_ROW, CLOCK_INDICATOR,false,0},
+    reset{INDICATOR_ROW, RESET_INDICATOR,false,0},
+    tracks{{INDICATOR_ROW,TRACK_ONE_INDICATOR,false,0},{INDICATOR_ROW,TRACK_TWO_INDICATOR,false,0},{INDICATOR_ROW,TRACK_THREE_INDICATOR,false,0},{INDICATOR_ROW,OFF_BEAT_INDICATOR,false,0}} {
 }
 
 void Display::initialise() {
   matrix.initialise();
-  animation();
+  simley();
 }
 
 void Display::render() {
 
- updateIndicators();
+  updateIndicators();
 
   for (int row = 0; row < MATRIX_ROWS; ++ row) {
     if (((nextDisplay[row].state ^ currentDisplay[row].state) != 0) || (currentCursor.active && row == currentCursor.row)) {
@@ -50,7 +47,7 @@ void Display::render() {
 void Display::updateIndicators() {
   updateIndicator(clock);
   updateIndicator(reset);
-  for(int track =0; track <= 3; ++track) {
+  for(int track = 0; track <= 3; ++track) {
     updateIndicator(tracks[track]);
   }
 }
@@ -200,15 +197,15 @@ void Display::fill(int &value, int length) {
   }
 }
 
-void Display::animation() {
+void Display::simley() {
   for (int repeat = 0; repeat < 3; ++ repeat) {
     showInverseSmileyFace();
-    delay(200);
+    delay(100);
     showSmileyFace();
-    delay(200);
+    delay(100);
   }
   showInverseSmileyFace();
-  delay(200);
+  delay(100);
   clear();
   render();
 }

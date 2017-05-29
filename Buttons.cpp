@@ -15,13 +15,8 @@ Buttons::Buttons()
 void Buttons::initialise() {
 }
 
-ControlEvent Buttons::event() {
-  return readState();
-}
-
-ControlEvent Buttons::readState() {
-
-  ControlEvent state = ControlEvent{Control::NoControl, ControlType::ButtonControl, ButtonState::Released};
+ButtonEvent Buttons::event() {
+  ButtonEvent state = ButtonEvent{Control::NoControl, ButtonState::Released};
   Control currentButton = readButton();
 
   // A new button has been clicked so start the hold timer

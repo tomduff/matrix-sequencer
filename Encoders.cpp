@@ -20,20 +20,23 @@ void Encoders::initialise() {
   digitalWrite(THREE_B, HIGH);
 }
 
-ControlEvent Encoders::event() {
-  ControlEvent event = ControlEvent{Control::NoControl, ControlType::EncoderControl, EncoderState::Stopped};
+EncoderEvent Encoders::event() {
+  EncoderEvent event = EncoderEvent{Control::NoControl, EncoderState::Stopped};
 
   EncoderState state = read(one);
   if (state != EncoderState::Stopped) {
-    event = ControlEvent{Control::One, ControlType::EncoderControl, state};
+    event.control = Control::One;
+    event.state = state;
   } else {
     state = read(two);
     if (state != EncoderState::Stopped) {
-      event = ControlEvent{Control::Two, ControlType::EncoderControl, state};
+        event.control = Control::Two;
+        event.state = state;
     } else {
       state = read(three);
       if (state != EncoderState::Stopped) {
-        event = ControlEvent{Control::Three, ControlType::EncoderControl, state};
+          event.control = Control::Three;
+          event.state = state;
       }
     }
   }

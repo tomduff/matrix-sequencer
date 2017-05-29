@@ -49,8 +49,8 @@ void loop() {
 
   handleReset(reset.signal());
   handleClock(clock.signal());
-  handleEvent(encoders.event());
-  handleEvent(buttons.event());
+  handleEncoderEvent(encoders.event());
+  handleButtonEvent(buttons.event());
 
   if (action == EditAction::NoAction || lastEdit == 0 || (millis() - lastEdit > EDIT_WAIT)) {
     display.hideCursor();
@@ -78,52 +78,54 @@ void handleClock(Signal signal) {
 }
 
 void handleStep(Signal signal, int track, Output* out) {
-  int step = 0;
-  if (track == 3) step = !tracks.getStep(0);
-  else step = tracks.getStep(track);
+  int step = tracks.getStep(track);
   int output = out->signal(signal, tracks.getOutMode(track), step);
   if (output) display.indicateTrack(track);
 }
 
-void handleEvent(ControlEvent event) {
+void handleEncoderEvent(EncoderEvent event) {
   if (event.control != Control::NoControl) lastEdit = millis();
   switch(event.control) {
     case Control::One:
-      if (event.type == ControlType::EncoderControl) {
         handleLengthEdit(event.state);
-      } else if (event.type == ControlType::ButtonControl) {
-        if(event.state == ButtonState::Clicked) {
-          handlePlayModeEdit();
-        } else if (event.state == ButtonState::Held) {
-          active = event.control;
-        }
-      }
       break;
     case Control::Two:
-      if (event.type == ControlType::EncoderControl) {
         handlePatternCursor(event.state);
-      } else if (event.type == ControlType::ButtonControl) {
-        if(event.state == ButtonState::Clicked) {
-          handlePatternEdit();
-        } else if (event.state == ButtonState::Held) {
-          active = event.control;
-        }
-      }
       break;
     case Control::Three:
-      if (event.type == ControlType::EncoderControl) {
         handleOffsetEdit(event.state);
-      } else if (event.type == ControlType::ButtonControl) {
-        if (event.state == ButtonState::Clicked) {
-          handleOutModeEdit();
-        } else if (event.state == ButtonState::Held) {
-          active = event.control;
-        }
-      }
       break;
     case Control::NoControl:
       break;
   }
+}
+
+void handleButtonEvent(ButtonEvent event) {
+  if (event.control != Control::NoControl) lastEdit = millis();
+  if (event.state == ButtonState::Clicked) handleButtonClick(event.control);
+  else if (event.state == ButtonState::Held) handleButtonHeld(event.control);
+}
+
+void handleButtonClick(Control control) {
+  switch(control) {
+    case Control::One:
+        handlePlayModeEdit();
+    break;
+  case Control::Two:
+        handlePatternEdit();
+      break;
+    case Control::Three:
+        handleOutModeEdit();
+      break;
+    case Control::NoControl:
+      break;
+  }
+}
+
+void handleButtonHeld(Control control) {
+  active = control;
+  cursor = 0;
+  clearEditAction();
 }
 
 void setEditAction(EditAction current) {
