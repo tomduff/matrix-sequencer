@@ -51,6 +51,7 @@ void Display::updateIndicators() {
   for(int track = 0; track <= 3; ++track) {
     updateIndicator(tracks[track]);
   }
+  updateTrackIndicator(activeTrack);
 }
 
 void Display::updateCursor() {
@@ -185,6 +186,7 @@ void Display::updateIndicator(Indicator& indicator) {
   }
 }
 
+void Display::updateTrackIndicator(TrackIndicator& indicator) {
   if (indicator.active) {
     if (indicator.start == 0 || (millis() - indicator.start > ROW_INDICATOR_TIME)) {
       indicator.active = false;
