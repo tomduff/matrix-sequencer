@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 
-#define CONFIG_VERSION 101
+#define CONFIG_VERSION 103
 #define CONFIG_ADDRESS 0
 #define MAX_STEP_INDEX 15
 
@@ -14,62 +14,64 @@ Tracks::Tracks() {
 
 
 void Tracks::updatePattern(int track, int position) {
-  bitWrite(settings.tracks[track].pattern, position, !bitRead(settings.tracks[track].pattern, position));
+  bitWrite(tracks[track].pattern, position, !bitRead(tracks[track].pattern, position));
   change = true;
 }
 
 void Tracks::applyOffset(int track, int offset) {
-  int original = settings.tracks[track].pattern;
-  for(int index = 0; index <= settings.tracks[track].length; ++index) {
+  int original = tracks[track].pattern;
+  for(int index = 0; index <= tracks[track].length; ++index) {
     int set = index + offset;
-    if(set < 0) set = settings.tracks[track].length;
-    else if(set > settings.tracks[track].length) set = 0;
-    bitWrite(settings.tracks[track].pattern, set, bitRead(original, index));
+    if(set < 0) set = tracks[track].length;
+    else if(set > tracks[track].length) set = 0;
+    bitWrite(tracks[track].pattern, set, bitRead(original, index));
     change = true;
   }
 }
 
 void Tracks::setLength(int track, int offset) {
-    settings.tracks[track].length += offset;
-    Utilities::bound(settings.tracks[track].length, 0, MAX_STEP_INDEX);
+    tracks[track].length += offset;
+    Utilities::bound(tracks[track].length, 0, MAX_STEP_INDEX);
     change = true;
 }
 
 void Tracks::setPlayMode(int track, PlayMode mode) {
-  settings.tracks[track].play = mode;
+  tracks[track].play = mode;
+  state[track].direction = PlayMode::Forward;
   change = true;
 }
 
 void Tracks::nextPlayMode(int track) {
-  int mode = (int)settings.tracks[track].play;
+  int mode = (int)tracks[track].play;
   ++mode;
-  Utilities::cycle(mode, PlayMode::Forward, PlayMode::Random);
-  settings.tracks[track].play = (PlayMode) mode;
+  Utilities::cycle(mode, PlayMode::Forward, PlayMode::Pendulum);
+  tracks[track].play = (PlayMode) mode;
+  state[track].direction = PlayMode::Forward;
   change = true;
 }
 
 void Tracks::setOutMode(int track, OutMode mode) {
-  settings.tracks[track].out = mode;
+  tracks[track].out = mode;
   change = true;
 }
 
 void Tracks::nextOutMode(int track) {
-  int mode = (int)settings.tracks[track].out;
+  int mode = (int)tracks[track].out;
   ++mode;
   Utilities::cycle(mode, OutMode::Trigger, OutMode::Gate);
-  settings.tracks[track].out = (OutMode) mode;
+  tracks[track].out = (OutMode) mode;
   change = true;
 }
 
 int Tracks::getLength(int track) {
-    return track < 3 ? settings.tracks[track].length : getLength(0);
+    return track < 3 ? tracks[track].length : getLength(0);
 }
 
 int Tracks::getPattern(int track) {
     int pattern = 0;
     if( track < 3 ) {
-      pattern = settings.tracks[track].pattern;
-      for (int i = settings.tracks[track].length + 1; i <= MAX_STEP_INDEX; ++i) bitClear(pattern, i);
+      pattern = tracks[track].pattern;
+      for (int i = tracks[track].length + 1; i <= MAX_STEP_INDEX; ++i) bitClear(pattern, i);
     } else {
       pattern = ~getPattern(0);
     }
@@ -77,64 +79,99 @@ int Tracks::getPattern(int track) {
 }
 
 int Tracks::getPosition(int track) {
-  return track < 3 ? settings.tracks[track].position : getPosition(0);
+  return track < 3 ? state[track].position : getPosition(0);
 }
 
 int Tracks::getStep(int track) {
-  return track < 3 ? bitRead(settings.tracks[track].pattern, settings.tracks[track].position) : !getStep(0);
+  return track < 3 ? bitRead(tracks[track].pattern, state[track].position) : !getStep(0);
 }
 
 PlayMode Tracks::getPlayMode(int track) {
-  return track < 3 ? settings.tracks[track].play : getPlayMode(0);
+  return track < 3 ? tracks[track].play : getPlayMode(0);
 }
 
 OutMode Tracks::getOutMode(int track) {
-  return track < 3 ? settings.tracks[track].out: getOutMode(0);
+  return track < 3 ? tracks[track].out: getOutMode(0);
 }
 
 void Tracks::stepOn() {
-  stepOn(&settings.tracks[0]);
-  stepOn(&settings.tracks[1]);
-  stepOn(&settings.tracks[2]);
+  stepOn(0);
+  stepOn(1);
+  stepOn(2);
 }
 
 void Tracks::reset() {
-  settings.tracks[0].position = 0;
-  settings.tracks[1].position = 0;
-  settings.tracks[2].position = 0;
+  initialise(state[0]);
+  initialise(state[1]);
+  initialise(state[2]);
 }
 
-void Tracks::stepOn(Track* track) {
-  switch(track->play) {
+void Tracks::stepOn(int track) {
+  switch(tracks[track].play) {
     case Forward:
-      ++track->position;
-      Utilities::cycle(track->position, 0, track->length);
+      ++state[track].position;
+      Utilities::cycle(state[track].position, 0, tracks[track].length);
     break;
     case Backward:
-      --track->position;
-      Utilities::cycle(track->position, 0, track->length);
+      --state[track].position;
+      Utilities::cycle(state[track].position, 0, tracks[track].length);
     break;
     case Random:
-      track->position = random(0, track->length + 1);
+      state[track].position = random(0, tracks[track].length + 1);
+    break;
+    case Pendulum:
+      if (state[track].direction == PlayMode::Forward) {
+        ++state[track].position;
+        if (state[track].position > tracks[track].length) {
+          state[track].direction = PlayMode::Backward;
+          state[track].position = tracks[track].length;
+        }
+      } else {
+        --state[track].position;
+        if (state[track].position < 0) {
+          state[track].direction = PlayMode::Forward;
+          state[track].position = 0;
+        }
+      }
     break;
   }
 }
 
 void Tracks::load() {
+  Settings settings;
   EEPROM.get(CONFIG_ADDRESS, settings);
-  if(settings.version != CONFIG_VERSION) initialise();
+  if(settings.version != CONFIG_VERSION) {
+    initialise(tracks[0]);
+    initialise(tracks[1]);
+    initialise(tracks[2]);
+  }
+  else {
+    tracks[0] = settings.tracks[0];
+    tracks[1] = settings.tracks[1];
+    tracks[2] = settings.tracks[2];
+  }
+  reset();
 }
 
 void Tracks::save() {
-  if(change) {
+  if (change) {
+    Settings settings = {{tracks[0], tracks[1], tracks[2]}, CONFIG_VERSION};
     EEPROM.put(CONFIG_ADDRESS, settings);
     change = false;
   }
 }
 
-void Tracks::initialise() {
-  settings.tracks[0] = {MAX_STEP_INDEX, 0, 0, PlayMode::Forward, OutMode::Trigger};
-  settings.tracks[1] = {MAX_STEP_INDEX, 0, 0, PlayMode::Forward, OutMode::Trigger};
-  settings.tracks[2] = {MAX_STEP_INDEX, 0, 0, PlayMode::Forward, OutMode::Trigger};
-  settings.version = CONFIG_VERSION;
+void Tracks::initialise(Track& track) {
+  track.length = MAX_STEP_INDEX;
+  track.pattern = 0;
+  track.type = TrackType::Euclidean;
+  track.play = PlayMode::Forward;
+  track.out = OutMode::Trigger;
+  track.divider = ClockDivider::OneBeat;
+}
+
+void Tracks::initialise(TrackState& state) {
+  state.position = 0;
+  state.beat = 0;
+  state.direction = PlayMode::Forward;
 }

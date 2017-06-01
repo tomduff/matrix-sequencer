@@ -7,7 +7,8 @@
 enum PlayMode {
   Forward = 0,
   Backward = 1,
-  Random = 2
+  Random = 2,
+  Pendulum = 3
 };
 
 enum OutMode {
@@ -16,12 +17,43 @@ enum OutMode {
   Gate = 2
 };
 
+enum TrackType {
+  Pattern,
+  Euclidean
+};
+
+enum ClockDivider {
+  OneBeat = 1,
+  TwoBeat = 2,
+  ThreeBeat = 3,
+  FourBeat = 4,
+  EightBeat = 8,
+  SixteenBeat = 16,
+  ThirtyTwoBeat = 32,
+  SixtyFourBeat = 64,
+  OneTriplet = 3,
+  TwoTriplet = 6,
+  ThreeTriplet = 9,
+  FourTriplet = 12,
+  FiveTriplet = 15,
+  SixTriplet = 18,
+  SevenTriplet = 21,
+  EightTriplet = 24
+};
+
 struct Track {
   int length;
   int pattern;
-  int position;
+  TrackType type;
   PlayMode play;
   OutMode out;
+  ClockDivider divider;
+};
+
+struct TrackState {
+  int position;
+  PlayMode direction;
+  int beat;
 };
 
 struct Settings {
@@ -50,10 +82,12 @@ public:
   void reset();
 private:
   bool change = false;
-  Settings settings;
-  void stepOn(Track* track);
+  Track tracks[3];
+  TrackState state[3];
+  void stepOn(int track);
   void load();
-  void initialise();
+  void initialise(Track& track);
+  void initialise(TrackState& track);
 };
 
 #endif

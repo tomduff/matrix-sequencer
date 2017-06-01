@@ -101,6 +101,10 @@ void Display::drawPlayModeView(int track, PlayMode mode) {
       case PlayMode::Random:
         setRow(row(track), B10100010);
       break;
+      case PlayMode::Pendulum:
+        setRow(row(track), B11100111);
+      break;
+      break;
     }
     setRow(row(track) + 1, ALL_OFF);
 }
