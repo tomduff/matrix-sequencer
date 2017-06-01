@@ -5,7 +5,7 @@ Initial simple implementation of a 3 track programmable pattern sequencer using 
 ## Controls
 + 1/Length
   + Rotate - Change length 1 - 16 steps
-  + Click - Cycle through Play Modes, currently Forwards, Backwards, Random
+  + Click - Cycle through Play Modes, currently Forwards, Backwards, Random, Pendulum
   + Hold (~2s) - Make Track 1 the active editing track
 + 2/Density
   + Rotate - Move the edit cursor
