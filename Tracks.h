@@ -7,8 +7,8 @@
 enum PlayMode {
   Forward = 0,
   Backward = 1,
-  Random = 2,
-  Pendulum = 3
+  Pendulum = 2,
+  Random = 3
 };
 
 enum OutMode {
@@ -22,38 +22,28 @@ enum TrackType {
   Euclidean
 };
 
-enum ClockDivider {
-  OneBeat = 1,
-  TwoBeat = 2,
-  ThreeBeat = 3,
-  FourBeat = 4,
-  EightBeat = 8,
-  SixteenBeat = 16,
-  ThirtyTwoBeat = 32,
-  SixtyFourBeat = 64,
-  OneTriplet = 3,
-  TwoTriplet = 6,
-  ThreeTriplet = 9,
-  FourTriplet = 12,
-  FiveTriplet = 15,
-  SixTriplet = 18,
-  SevenTriplet = 21,
-  EightTriplet = 24
+enum DividerType {
+  Beat,
+  Triplet
 };
 
 struct Track {
   int length;
   int pattern;
+  int density;
   TrackType type;
   PlayMode play;
   OutMode out;
-  ClockDivider divider;
+  int divider;
+  DividerType dividerType;
 };
 
 struct TrackState {
   int position;
-  PlayMode direction;
+  bool forward;
   int beat;
+  int division;
+  int euclidean;
 };
 
 struct Settings {
@@ -67,13 +57,15 @@ public:
   void updatePattern(int track, int position);
   void applyOffset(int track, int offset);
   void setLength(int track, int offset);
-  void setPlayMode(int track, PlayMode mode);
-  void nextPlayMode(int track);
-  void setOutMode(int track, OutMode mode);
-  void nextOutMode(int track);
+  void setPlayMode(int track, int offset);
+  void setOutMode(int track, int offset);
+  void setDivider(int track, int offset);
+  void nextDividerType(int track);
   int getLength(int track);
   int getPattern(int track);
   int getPosition(int position);
+  int getDivider(int track);
+  DividerType getDividerType(int track);
   int getStep(int track);
   PlayMode getPlayMode(int track);
   OutMode getOutMode(int track);
@@ -85,9 +77,12 @@ private:
   Track tracks[3];
   TrackState state[3];
   void stepOn(int track);
+  void stepPosition(int track);
   void load();
-  void initialise(Track& track);
-  void initialise(TrackState& track);
+  void initialiseTrack(int track);
+  void initialiseState(int track);
+  void resetDivision(int track);
+  int calculateDivision(int divider, DividerType type);
 };
 
 #endif

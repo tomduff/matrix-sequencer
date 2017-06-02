@@ -42,11 +42,13 @@ public:
   void drawPlayModeView(int track, PlayMode mode);
   void drawOutModeView(int track, OutMode mode);
   void drawPlayView(int track, int position, int pattern);
+  void drawDividerView(int track, int divider, DividerType type);
   void drawRowsCursor(int row, int position);
   void indicateReset();
   void indicateClock();
   void indicateTrack(int track);
   void indicateActiveTrack(int track);
+  void indicateMode(int mode);
 private:
   void showIndicator(Indicator& indicator);
   void updateIndicators();

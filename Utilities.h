@@ -9,4 +9,15 @@ public:
     if (value < min ) value = max;
     else if (value > max) value = min;
   }
+  static bool reverse(int &value, int min, int max) {
+    bool reversed = false;
+    if (value > max) {
+      value = max;
+      reversed = true;
+    } else if (value < min) {
+      value = min;
+      reversed = true;
+    }
+    return reversed;
+  }
 };

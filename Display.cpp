@@ -6,6 +6,7 @@
 #define INDICATOR_TIME 25
 #define ROW_INDICATOR_TIME 200
 #define INDICATOR_ROW 7
+#define MODE_ROW 6
 #define CLOCK_INDICATOR 0
 #define RESET_INDICATOR 1
 #define TRACK_ONE_INDICATOR 2
@@ -113,15 +114,15 @@ void Display::drawOutModeView(int track, OutMode mode) {
     switch(mode) {
       case OutMode::Trigger:
         setRow(row(track), B00000010);
-        setRow(row(track) + 1, B00000101);
+        setRow(row(track) + 1, B00000111);
         break;
       case OutMode::Clock:
-        setRow(row(track), B00000110);
-        setRow(row(track) + 1, B00001001);
+        setRow(row(track), B00001110);
+        setRow(row(track) + 1, B00010001);
       break;
       case OutMode::Gate:
-        setRow(row(track), B00011110);
-        setRow(row(track) + 1, B00100001);
+        setRow(row(track), B01111110);
+        setRow(row(track) + 1, B10000001);
       break;
     }
 }
@@ -136,6 +137,21 @@ void Display::drawPlayView(int track, int position, int pattern) {
   }
   bitSet(state, position);
   setRows(row(track), state);
+}
+
+void Display::drawDividerView(int track, int divider, DividerType type) {
+  byte state = 0;
+  bitSet(state, divider);
+  setRow(row(track), state);
+
+  switch(type) {
+    case Beat:
+      setRow(row(track) + 1, B00000001);
+      break;
+    case Triplet:
+      setRow(row(track) + 1, B00000111);
+      break;
+  }
 }
 
 void Display::setRows(int row, int state) {
@@ -199,6 +215,12 @@ void Display::updateTrackIndicator(TrackIndicator& indicator) {
     setRow(row(indicator.track), indicator.active ? ALL_ON : ALL_OFF);
     setRow(row(indicator.track) + 1, indicator.active ? ALL_ON : ALL_OFF);
   }
+}
+
+void Display::indicateMode(int mode) {
+  byte state = 0;
+  bitSet(state, mode);
+  setRow(MODE_ROW, state);
 }
 
 void Display::drawRowCursor(int row, int position) {

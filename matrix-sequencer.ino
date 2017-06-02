@@ -7,16 +7,10 @@
 #include "Tracks.h"
 #include "Utilities.h"
 
-Display display = Display();
-Encoders encoders = Encoders();
-Buttons buttons = Buttons();
-Input clock = Input(0);
-Input reset = Input(1);
-Output oneOut = Output(11);
-Output twoOut = Output(12);
-Output threeOut = Output(13);
-Output offOut = Output(17);
-Tracks tracks = Tracks();
+#define EDIT_WAIT 7500
+#define EDIT_MODES 2
+#define TRACKS 4
+#define DRAWN_TRACKS 3
 
 enum EditAction {
   NoAction,
@@ -24,25 +18,42 @@ enum EditAction {
   EditPattern,
   EditOffset,
   EditPlayMode,
-  EditOutMode
+  EditOutMode,
+  DividerMode
 };
 
-#define EDIT_WAIT 7500
+struct EditMode {
+  void (*oneRotate)(int);
+  void (*oneClick)();
+  void (*twoRotate)(int);
+  void (*twoClick)();
+  void (*threeRotate)(int);
+};
 
+Display display = Display();
+Encoders encoders = Encoders();
+Buttons buttons = Buttons();
+Input clock = Input(0);
+Input reset = Input(1);
+Output outs[4] = {Output(11), Output(12), Output(13), Output(17)};
+Tracks tracks = Tracks();
+EditMode editModes[EDIT_MODES];
+int edit = 0;
 int cursor = 0;
-int active = Control::One;
+int active = 0;
 EditAction action = EditAction::NoAction;
 unsigned long lastEdit = 0;
 
 void setup() {
+  initialiseEditModes();
   display.initialise();
   encoders.initialise();
   buttons.initialise();
   clock.initialise();
-  oneOut.initialise();
-  twoOut.initialise();
-  threeOut.initialise();
-  offOut.initialise();
+  reset.initialise();
+  for(int track = 0; track < TRACKS; ++track) outs[track].initialise();
+  clearEditAction();
+  handleButtonHeld(Control::One);
 }
 
 void loop() {
@@ -58,7 +69,7 @@ void loop() {
   }
 
   drawTracks();
-
+  display.indicateMode(edit);
   display.render();
 }
 
@@ -70,16 +81,12 @@ void handleReset(Signal signal) {
 void handleClock(Signal signal) {
   if (signal == Signal::Rising) tracks.stepOn();
   if (signal == Signal::Rising || signal == Signal::High) display.indicateClock();
-
-  handleStep(signal, 0, &oneOut);
-  handleStep(signal, 1, &twoOut);
-  handleStep(signal, 2, &threeOut);
-  handleStep(signal, 3, &offOut);
+  for(int track = 0; track < TRACKS; ++track) handleStep(signal, track);
 }
 
-void handleStep(Signal signal, int track, Output* out) {
+void handleStep(Signal signal, int track) {
   int step = tracks.getStep(track);
-  int output = out->signal(signal, tracks.getOutMode(track), step);
+  int output = outs[track].signal(signal, tracks.getOutMode(track), step);
   if (output) display.indicateTrack(track);
 }
 
@@ -87,13 +94,13 @@ void handleEncoderEvent(EncoderEvent event) {
   if (event.control != Control::NoControl) lastEdit = millis();
   switch(event.control) {
     case Control::One:
-        handleLengthEdit(event.state);
+      editModes[edit].oneRotate(event.state);
       break;
     case Control::Two:
-        handlePatternCursor(event.state);
+      editModes[edit].twoRotate(event.state);
       break;
     case Control::Three:
-        handleOffsetEdit(event.state);
+      editModes[edit].threeRotate(event.state);
       break;
     case Control::NoControl:
       break;
@@ -109,17 +116,23 @@ void handleButtonEvent(ButtonEvent event) {
 void handleButtonClick(Control control) {
   switch(control) {
     case Control::One:
-        handlePlayModeEdit();
+        editModes[edit].oneClick();
     break;
   case Control::Two:
-        handlePatternEdit();
+        editModes[edit].twoClick();
       break;
     case Control::Three:
-        handleOutModeEdit();
+        nextEditMode();
       break;
     case Control::NoControl:
       break;
   }
+}
+
+void nextEditMode() {
+  ++edit;
+  Utilities::cycle(edit, 0, EDIT_MODES - 1);
+  clearEditAction();
 }
 
 void handleButtonHeld(Control control) {
@@ -188,24 +201,44 @@ void handleOffsetEdit(int change) {
   display.drawPatternView(active, tracks.getPattern(active));
 }
 
-void handlePlayModeEdit() {
+void handlePlayModeEdit(int change) {
   if (action != EditAction::EditPlayMode) {
     display.hideCursor();
     setEditAction(EditAction::EditPlayMode);
   } else {
-    tracks.nextPlayMode(active);
+    tracks.setPlayMode(active, change);
   }
   display.drawPlayModeView(active, tracks.getPlayMode(active));
 }
 
-void handleOutModeEdit() {
+void handleOutModeEdit(int change) {
   if (action != EditAction::EditOutMode) {
     display.hideCursor();
     setEditAction(EditAction::EditOutMode);
   } else {
-    tracks.nextOutMode(active);
+    tracks.setOutMode(active, change);
   }
   display.drawOutModeView(active, tracks.getOutMode(active));
+}
+
+void handleDividerEdit(int change) {
+  if (action != EditAction::DividerMode) {
+    display.hideCursor();
+    setEditAction(EditAction::DividerMode);
+  } else {
+    tracks.setDivider(active, change);
+  }
+  display.drawDividerView(active, tracks.getDivider(active), tracks.getDividerType(active));
+}
+
+void handleDividerTypeEdit() {
+  if (action != EditAction::DividerMode) {
+    display.hideCursor();
+    setEditAction(EditAction::DividerMode);
+  } else {
+    tracks.nextDividerType(active);
+  }
+  display.drawDividerView(active, tracks.getDivider(active), tracks.getDividerType(active));
 }
 
 void drawCursor() {
@@ -214,9 +247,16 @@ void drawCursor() {
 }
 
 void drawTracks() {
-  for(int track = 0; track < 3; ++track) {
-    if(track != active || action == EditAction::NoAction) {
-      display.drawPlayView(track, tracks.getPosition(track), tracks.getPattern(track));
-    }
+  for(int track = 0; track < DRAWN_TRACKS; ++track) {
+    if(track != active || action == EditAction::NoAction) display.drawPlayView(track, tracks.getPosition(track), tracks.getPattern(track));
   }
 }
+
+void initialiseEditModes() {
+  editModes[0] = EditMode{handleLengthEdit, noActionButton, handlePatternCursor, handlePatternEdit, handleOffsetEdit};
+  editModes[1] = EditMode{handleDividerEdit, handleDividerTypeEdit, handlePlayModeEdit, noActionButton, handleOutModeEdit};
+  edit = 0;
+}
+
+void noActionButton() {}
+void noActionEncoder(int change) {}
