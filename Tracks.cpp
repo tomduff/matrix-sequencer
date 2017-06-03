@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 
-#define CONFIG_VERSION 104
+#define CONFIG_VERSION 101
 #define CONFIG_ADDRESS 0
 #define MAX_STEP_INDEX 15
 #define MAX_DIVIDER 7
@@ -14,26 +14,38 @@ Tracks::Tracks() {
   reset();
 }
 
-
 void Tracks::updatePattern(int track, int position) {
-  bitWrite(tracks[track].pattern, position, !bitRead(tracks[track].pattern, position));
+  int step = tracks[track].start + position;
+  bitWrite(tracks[track].pattern, step, !bitRead(tracks[track].pattern, step));
+  resetPattern(track);
   change = true;
 }
 
 void Tracks::applyOffset(int track, int offset) {
   int original = tracks[track].pattern;
-  for(int index = 0; index <= tracks[track].length; ++index) {
+  for(int index = tracks[track].start; index <= tracks[track].end; ++index) {
     int set = index + offset;
-    if(set < 0) set = tracks[track].length;
-    else if(set > tracks[track].length) set = 0;
+    if(set < tracks[track].start) set = tracks[track].end;
+    else if (set > tracks[track].end) set = tracks[track].start;
     bitWrite(tracks[track].pattern, set, bitRead(original, index));
-    change = true;
   }
+  resetPattern(track);
+  change = true;
 }
 
-void Tracks::setLength(int track, int offset) {
-    tracks[track].length += offset;
-    Utilities::bound(tracks[track].length, 0, MAX_STEP_INDEX);
+void Tracks::setStart(int track, int offset) {
+    tracks[track].start += offset;
+    Utilities::bound(tracks[track].start, 0, tracks[track].end);
+    resetLength(track);
+    resetPattern(track);
+    change = true;
+}
+
+void Tracks::setEnd(int track, int offset) {
+    tracks[track].end += offset;
+    Utilities::bound(tracks[track].end, tracks[track].start, MAX_STEP_INDEX);
+    resetLength(track);
+    resetPattern(track);
     change = true;
 }
 
@@ -70,31 +82,20 @@ void Tracks::nextDividerType(int track) {
     change = true;
 }
 
-void Tracks::resetDivision(int track) {
-    state[track].division = calculateDivision(tracks[track].divider, tracks[track].dividerType);
-    state[track].beat = 0;
+int Tracks::getStart(int track) {
+    return track < TRACKS ? tracks[track].start : getStart(0);
 }
 
-int Tracks::calculateDivision(int divider, DividerType type) {
-  int division = 1;
-  if (type == DividerType::Beat) division = 1 << divider;
-  else if (type == DividerType::Triplet) division = (divider + 1) * 3;
-  return division;
+int Tracks::getEnd(int track) {
+    return track < TRACKS ? tracks[track].end : getEnd(0);
 }
 
 int Tracks::getLength(int track) {
-    return track < TRACKS ? tracks[track].length : getLength(0);
+    return track < TRACKS ? state[track].length : getLength(0);
 }
 
 int Tracks::getPattern(int track) {
-    int pattern = 0;
-    if( track < TRACKS ) {
-      pattern = tracks[track].pattern;
-      for (int i = tracks[track].length + 1; i <= MAX_STEP_INDEX; ++i) bitClear(pattern, i);
-    } else {
-      pattern = ~getPattern(0);
-    }
-    return pattern;
+    return track < TRACKS ? state[track].pattern : getPattern(0);
 }
 
 int Tracks::getDivider(int track) {
@@ -110,7 +111,7 @@ int Tracks::getPosition(int track) {
 }
 
 int Tracks::getStep(int track) {
-  return track < TRACKS ? bitRead(tracks[track].pattern, state[track].position) : !getStep(0);
+  return track < TRACKS ? bitRead(state[track].pattern, state[track].position) : !getStep(0);
 }
 
 PlayMode Tracks::getPlayMode(int track) {
@@ -141,19 +142,19 @@ void Tracks::stepPosition(int track) {
   switch(tracks[track].play) {
     case Forward:
       ++state[track].position;
-      Utilities::cycle(state[track].position, 0, tracks[track].length);
+      Utilities::cycle(state[track].position, 0, state[track].length);
     break;
     case Backward:
       --state[track].position;
-      Utilities::cycle(state[track].position, 0, tracks[track].length);
+      Utilities::cycle(state[track].position, 0, state[track].length);
     break;
     case Random:
-      state[track].position = random(0, tracks[track].length + 1);
+      state[track].position = random(0, state[track].length + 1);
     break;
     case Pendulum:
       if (state[track].forward) ++state[track].position;
       else --state[track].position;
-      state[track].position = Utilities::reverse(state[track].position, 0, tracks[track].length);
+      state[track].position = Utilities::reverse(state[track].position, 0, state[track].length);
     break;
   }
 }
@@ -174,7 +175,8 @@ void Tracks::save() {
 }
 
 void Tracks::initialiseTrack(int track) {
-  tracks[track].length = MAX_STEP_INDEX;
+  tracks[track].start = 0;
+  tracks[track].end = MAX_STEP_INDEX;
   tracks[track].pattern = 0;
   tracks[track].type = TrackType::Euclidean;
   tracks[track].play = PlayMode::Forward;
@@ -187,10 +189,36 @@ void Tracks::initialiseState(int track) {
   state[track].position = 0;
   state[track].beat = 0;
   state[track].forward = true;
+  resetLength(track);
   resetDivision(track);
+  resetPattern(track);
 }
 
-// unsigned int Tracks::euclidean(int n, int k, int o) { 
+void Tracks::resetLength(int track) {
+    state[track].length = tracks[track].end - tracks[track].start;
+}
+
+void Tracks::resetPattern(int track) {
+  int index = 0;
+  for (int step = tracks[track].start; step <=tracks[track].end; ++step) {
+    bitWrite(state[track].pattern, index, bitRead(tracks[track].pattern, step));
+    ++index;
+  }
+}
+
+void Tracks::resetDivision(int track) {
+    state[track].division = calculateDivision(tracks[track].divider, tracks[track].dividerType);
+    state[track].beat = 0;
+}
+
+int Tracks::calculateDivision(int divider, DividerType type) {
+  int division = 1;
+  if (type == DividerType::Beat) division = 1 << divider;
+  else if (type == DividerType::Triplet) division = (divider + 1) * 3;
+  return division;
+}
+
+// unsigned int Tracks::euclidean(int n, int k, int o) {
 // 	int pauses = n - k;
 // 	int pulses = k;
 // 	int offset = o;

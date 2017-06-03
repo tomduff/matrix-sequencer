@@ -38,7 +38,7 @@ public:
   void showCursor();
   void hideCursor();
   void drawPatternView(int track, int pattern);
-  void drawLengthView(int track, int length);
+  void drawLengthView(int track, int start, int end);
   void drawPlayModeView(int track, PlayMode mode);
   void drawOutModeView(int track, OutMode mode);
   void drawPlayView(int track, int position, int pattern);
@@ -61,6 +61,7 @@ private:
   void showSmileyFace();
   void showInverseSmileyFace();
   void fill(int &value, int length);
+  void setRange(int &value, int start, int end, int bit);
   void setRow(int row, byte state);
   void setRows(int row, int state);
   void setLed(int row, int column, bool state);

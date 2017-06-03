@@ -85,9 +85,9 @@ void Display::drawPatternView(int track, int pattern) {
     setRows(row(track), pattern);
 }
 
-void Display::drawLengthView(int track, int length) {
+void Display::drawLengthView(int track, int start, int end) {
     int state = 0;
-    fill(state, length);
+    setRange(state, start, end, LED_ON);
     setRows(row(track), state);
 }
 
@@ -114,7 +114,7 @@ void Display::drawOutModeView(int track, OutMode mode) {
     switch(mode) {
       case OutMode::Trigger:
         setRow(row(track), B00000010);
-        setRow(row(track) + 1, B00000111);
+        setRow(row(track) + 1, B00000101);
         break;
       case OutMode::Clock:
         setRow(row(track), B00001110);
@@ -237,8 +237,12 @@ void Display::drawRowsCursor(int row, int position) {
 }
 
 void Display::fill(int &value, int length) {
-  for(int i = 0; i <= length; ++i) {
-    bitSet(value, i);
+  setRange(value, 0, length, LED_ON);
+}
+
+void Display::setRange(int &value, int start, int end, int bit) {
+  for(int i = start; i <= end; ++i) {
+    bitWrite(value, i, bit);
   }
 }
 

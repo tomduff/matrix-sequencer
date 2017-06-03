@@ -43,6 +43,7 @@ int cursor = 0;
 int active = 0;
 EditAction action = EditAction::NoAction;
 unsigned long lastEdit = 0;
+bool lengthMarker = true;
 
 void setup() {
   initialiseEditModes();
@@ -158,17 +159,28 @@ void moveCursor(int Offset, int max) {
     Utilities::cycle(cursor, 0, max);
 }
 
-void handleLengthEdit(int change) {
+void lengthEdit(int change) {
   if (action != EditAction::EditLength) {
     display.hideCursor();
     setEditAction(EditAction::EditLength);
   }  else {
-    tracks.setLength(active, change);
+    if (lengthMarker) tracks.setEnd(active, change);
+    else tracks.setStart(active, change);
   }
-  display.drawLengthView(active, tracks.getLength(active));
+  display.drawLengthView(active, tracks.getStart(active), tracks.getEnd(active));
 }
 
-void handlePatternCursor(int change) {
+void switchLengthMarker() {
+  if (action != EditAction::EditLength) {
+    display.hideCursor();
+    setEditAction(EditAction::EditLength);
+  }  else {
+    lengthMarker = !lengthMarker;
+  }
+  display.drawLengthView(active, tracks.getStart(active), tracks.getEnd(active));
+}
+
+void movePatternCursor(int change) {
   if (action != EditAction::EditPattern) {
     cursor = 0;
     setEditAction(EditAction::EditPattern);
@@ -179,7 +191,7 @@ void handlePatternCursor(int change) {
   drawCursor();
 }
 
-void handlePatternEdit() {
+void patternEdit() {
   if (action != EditAction::EditPattern) {
     cursor = 0;
     display.showCursor();
@@ -191,7 +203,7 @@ void handlePatternEdit() {
   display.drawPatternView(active, tracks.getPattern(active));
 }
 
-void handleOffsetEdit(int change) {
+void offsetEdit(int change) {
   if (action != EditAction::EditOffset) {
     display.hideCursor();
     setEditAction(EditAction::EditOffset);
@@ -201,7 +213,7 @@ void handleOffsetEdit(int change) {
   display.drawPatternView(active, tracks.getPattern(active));
 }
 
-void handlePlayModeEdit(int change) {
+void playModeEdit(int change) {
   if (action != EditAction::EditPlayMode) {
     display.hideCursor();
     setEditAction(EditAction::EditPlayMode);
@@ -211,7 +223,7 @@ void handlePlayModeEdit(int change) {
   display.drawPlayModeView(active, tracks.getPlayMode(active));
 }
 
-void handleOutModeEdit(int change) {
+void outModeEdit(int change) {
   if (action != EditAction::EditOutMode) {
     display.hideCursor();
     setEditAction(EditAction::EditOutMode);
@@ -221,7 +233,7 @@ void handleOutModeEdit(int change) {
   display.drawOutModeView(active, tracks.getOutMode(active));
 }
 
-void handleDividerEdit(int change) {
+void dividerEdit(int change) {
   if (action != EditAction::DividerMode) {
     display.hideCursor();
     setEditAction(EditAction::DividerMode);
@@ -231,7 +243,7 @@ void handleDividerEdit(int change) {
   display.drawDividerView(active, tracks.getDivider(active), tracks.getDividerType(active));
 }
 
-void handleDividerTypeEdit() {
+void switchDividerType() {
   if (action != EditAction::DividerMode) {
     display.hideCursor();
     setEditAction(EditAction::DividerMode);
@@ -253,8 +265,8 @@ void drawTracks() {
 }
 
 void initialiseEditModes() {
-  editModes[0] = EditMode{handleLengthEdit, noActionButton, handlePatternCursor, handlePatternEdit, handleOffsetEdit};
-  editModes[1] = EditMode{handleDividerEdit, handleDividerTypeEdit, handlePlayModeEdit, noActionButton, handleOutModeEdit};
+  editModes[0] = EditMode{lengthEdit, switchLengthMarker, movePatternCursor, patternEdit, offsetEdit};
+  editModes[1] = EditMode{dividerEdit, switchDividerType, playModeEdit, noActionButton, outModeEdit};
   edit = 0;
 }
 
