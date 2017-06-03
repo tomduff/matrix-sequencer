@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 
-#define CONFIG_VERSION 99
+#define CONFIG_VERSION 105
 #define CONFIG_ADDRESS 0
 #define MAX_STEP_INDEX 15
 #define MAX_DIVIDER 7
@@ -55,7 +55,7 @@ void Tracks::setLength(int track, int offset) {
 
 void Tracks::setDensity(int track, int offset) {
   tracks[track].density += offset;
-  Utilities::bound(tracks[track].density , 0, tracks[track].length);
+  Utilities::bound(tracks[track].density, 0, tracks[track].length);
   resetPattern(track);
   change = true;
 }
@@ -95,43 +95,43 @@ void Tracks::setOutMode(int track, int offset) {
 }
 
 void Tracks::setDivider(int track, int offset) {
-    tracks[track].divider += offset;
-    Utilities::cycle(tracks[track].divider, 0, MAX_DIVIDER);
-    resetDivision(track);
-    change = true;
+  tracks[track].divider += offset;
+  Utilities::cycle(tracks[track].divider, 0, MAX_DIVIDER);
+  resetDivision(track);
+  change = true;
 }
 
 void Tracks::nextDividerType(int track) {
-    int mode = (int)tracks[track].dividerType;
-    ++mode;
-    Utilities::cycle(mode, DividerType::Beat, DividerType::Triplet);
-    tracks[track].dividerType = (DividerType) mode;
-    resetDivision(track);
-    change = true;
+  int mode = (int)tracks[track].dividerType;
+  ++mode;
+  Utilities::cycle(mode, DividerType::Beat, DividerType::Triplet);
+  tracks[track].dividerType = (DividerType) mode;
+  resetDivision(track);
+  change = true;
 }
 
 int Tracks::getStart(int track) {
-    return track < TRACKS ? tracks[track].start : getStart(0);
+  return track < TRACKS ? tracks[track].start : getStart(0);
 }
 
 int Tracks::getEnd(int track) {
-    return track < TRACKS ? tracks[track].end : getEnd(0);
+  return track < TRACKS ? tracks[track].end : getEnd(0);
 }
 
 int Tracks::getLength(int track) {
-    return track < TRACKS ? state[track].length : getLength(0);
+  return track < TRACKS ? state[track].length : getLength(0);
 }
 
 int Tracks::getPattern(int track) {
-    return track < TRACKS ? state[track].pattern : getPattern(0);
+  return track < TRACKS ? state[track].pattern : getPattern(0);
 }
 
 int Tracks::getDivider(int track) {
-    return track < TRACKS ? tracks[track].divider : getDivider(0);
+  return track < TRACKS ? tracks[track].divider : getDivider(0);
 }
 
 DividerType Tracks::getDividerType(int track) {
-    return track < TRACKS ? tracks[track].dividerType : getDividerType(0);
+  return track < TRACKS ? tracks[track].dividerType : getDividerType(0);
 }
 
 int Tracks::getPosition(int track) {
@@ -320,8 +320,8 @@ void Tracks::rotate(int &pattern, int start, int end, int offset) {
   int original = pattern;
   for(int index = start; index <= end; ++index) {
     int set = index + offset;
-    if(set < start) set = end;
-    else if (set > end) set = start;
+    if(set < start) set = set + end + 1;
+    else if (set > end) set = set - end - 1;
     bitWrite(pattern, set, bitRead(original, index));
   }
 }
