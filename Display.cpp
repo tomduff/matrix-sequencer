@@ -91,6 +91,12 @@ void Display::drawLengthView(int track, int start, int end) {
     setRows(row(track), state);
 }
 
+void Display::drawLengthView(int track, int length) {
+    int state = 0;
+    fill(state, length, LED_ON);
+    setRows(row(track), state);
+}
+
 void Display::drawPlayModeView(int track, PlayMode mode) {
     switch(mode) {
       case PlayMode::Forward:
@@ -123,6 +129,19 @@ void Display::drawOutModeView(int track, OutMode mode) {
       case OutMode::Gate:
         setRow(row(track), B01111110);
         setRow(row(track) + 1, B10000001);
+      break;
+    }
+}
+
+void Display::drawPatternTypeView(int track, PatternType mode) {
+    switch(mode) {
+      case PatternType::Programmed:
+        setRow(row(track), ALL_ON);
+        setRow(row(track) + 1, ALL_OFF);
+        break;
+      case PatternType::Euclidean:
+        setRow(row(track), ALL_OFF);
+        setRow(row(track) + 1, ALL_ON);
       break;
     }
 }
@@ -236,8 +255,8 @@ void Display::drawRowsCursor(int row, int position) {
   drawRowCursor(row, position);
 }
 
-void Display::fill(int &value, int length) {
-  setRange(value, 0, length, LED_ON);
+void Display::fill(int &value, int length, int bit) {
+  setRange(value, 0, length, bit);
 }
 
 void Display::setRange(int &value, int start, int end, int bit) {

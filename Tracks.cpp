@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 
-#define CONFIG_VERSION 101
+#define CONFIG_VERSION 99
 #define CONFIG_ADDRESS 0
 #define MAX_STEP_INDEX 15
 #define MAX_DIVIDER 7
@@ -21,32 +21,60 @@ void Tracks::updatePattern(int track, int position) {
   change = true;
 }
 
-void Tracks::applyOffset(int track, int offset) {
-  int original = tracks[track].pattern;
-  for(int index = tracks[track].start; index <= tracks[track].end; ++index) {
-    int set = index + offset;
-    if(set < tracks[track].start) set = tracks[track].end;
-    else if (set > tracks[track].end) set = tracks[track].start;
-    bitWrite(tracks[track].pattern, set, bitRead(original, index));
-  }
+void Tracks::rotatePattern(int track, int offset) {
+  rotate(tracks[track].pattern, tracks[track].start, tracks[track].end, offset);
   resetPattern(track);
   change = true;
 }
 
 void Tracks::setStart(int track, int offset) {
-    tracks[track].start += offset;
-    Utilities::bound(tracks[track].start, 0, tracks[track].end);
-    resetLength(track);
-    resetPattern(track);
-    change = true;
+  tracks[track].start += offset;
+  Utilities::bound(tracks[track].start, 0, tracks[track].end);
+  resetLength(track);
+  resetPattern(track);
+  change = true;
 }
 
 void Tracks::setEnd(int track, int offset) {
-    tracks[track].end += offset;
-    Utilities::bound(tracks[track].end, tracks[track].start, MAX_STEP_INDEX);
-    resetLength(track);
-    resetPattern(track);
-    change = true;
+  tracks[track].end += offset;
+  Utilities::bound(tracks[track].end, tracks[track].start, MAX_STEP_INDEX);
+  resetLength(track);
+  resetPattern(track);
+  change = true;
+}
+
+void Tracks::setLength(int track, int offset) {
+  tracks[track].length += offset;
+  Utilities::bound(tracks[track].length, 0, MAX_STEP_INDEX);
+  Utilities::bound(tracks[track].offset, 0, tracks[track].length);
+  Utilities::bound(tracks[track].density, 0, tracks[track].length);
+  resetLength(track);
+  resetPattern(track);
+  change = true;
+}
+
+void Tracks::setDensity(int track, int offset) {
+  tracks[track].density += offset;
+  Utilities::bound(tracks[track].density , 0, tracks[track].length);
+  resetPattern(track);
+  change = true;
+}
+
+void Tracks::setOffset(int track, int offset) {
+  tracks[track].offset += offset;
+  Utilities::cycle(tracks[track].offset, 0, tracks[track].length);
+  resetPattern(track);
+  change = true;
+}
+
+void Tracks::nextPatternType(int track) {
+  int mode = (int)tracks[track].patternType;
+  ++mode;
+  Utilities::cycle(mode, PatternType::Programmed, PatternType::Euclidean);
+  tracks[track].patternType = (PatternType) mode;
+  resetLength(track);
+  resetPattern(track);
+  change = true;
 }
 
 void Tracks::setPlayMode(int track, int offset) {
@@ -114,6 +142,10 @@ int Tracks::getStep(int track) {
   return track < TRACKS ? bitRead(state[track].pattern, state[track].position) : !getStep(0);
 }
 
+PatternType Tracks::getPatternType(int track) {
+  return track < TRACKS ? tracks[track].patternType : getPatternType(0);
+}
+
 PlayMode Tracks::getPlayMode(int track) {
   return track < TRACKS ? tracks[track].play : getPlayMode(0);
 }
@@ -175,13 +207,16 @@ void Tracks::save() {
 }
 
 void Tracks::initialiseTrack(int track) {
+  tracks[track].pattern = 0;
   tracks[track].start = 0;
   tracks[track].end = MAX_STEP_INDEX;
-  tracks[track].pattern = 0;
-  tracks[track].type = TrackType::Euclidean;
+  tracks[track].length = MAX_STEP_INDEX;
+  tracks[track].density = 0;
+  tracks[track].offset = 0;
   tracks[track].play = PlayMode::Forward;
   tracks[track].out = OutMode::Trigger;
   tracks[track].divider = 0;
+  tracks[track].patternType = PatternType::Programmed;
   tracks[track].dividerType = DividerType::Beat;
 }
 
@@ -195,15 +230,38 @@ void Tracks::initialiseState(int track) {
 }
 
 void Tracks::resetLength(int track) {
-    state[track].length = tracks[track].end - tracks[track].start;
+  switch(tracks[track].patternType) {
+    case Programmed:
+      state[track].length = tracks[track].end - tracks[track].start;
+      break;
+    case Euclidean:
+      state[track].length = tracks[track].length;
+      break;
+  }
 }
 
 void Tracks::resetPattern(int track) {
+  switch(tracks[track].patternType) {
+    case Programmed:
+      resetProgrammed(track);
+      break;
+    case Euclidean:
+      resetEuclidean(track);
+      break;
+  }
+}
+
+void Tracks::resetProgrammed(int track) {
   int index = 0;
   for (int step = tracks[track].start; step <=tracks[track].end; ++step) {
     bitWrite(state[track].pattern, index, bitRead(tracks[track].pattern, step));
     ++index;
   }
+}
+
+void Tracks::resetEuclidean(int track) {
+  state[track].pattern = euclidean(tracks[track].length + 1, tracks[track].density + 1);
+  if (tracks[track].offset > 0) rotate(state[track].pattern, 0, tracks[track].length, tracks[track].offset);
 }
 
 void Tracks::resetDivision(int track) {
@@ -218,106 +276,52 @@ int Tracks::calculateDivision(int divider, DividerType type) {
   return division;
 }
 
-// unsigned int Tracks::euclidean(int n, int k, int o) {
-// 	int pauses = n - k;
-// 	int pulses = k;
-// 	int offset = o;
-// 	int steps = n;
-// 	int per_pulse = pauses / k;
-// 	int remainder = pauses%pulses;
-// 	unsigned int workbeat[n];
-// 	unsigned int outbeat;
-// 	int outbeat2;
-// 	unsigned int working;
-// 	int workbeat_count = n;
-// 	int a;
-// 	int b;
-// 	int trim_count;
-//
-// 	for (a = 0; a < n; a++) {
-// 		if (a < pulses) workbeat[a] = 1;
-// 		else workbeat[a] = 0;
-// 	}
-//
-// 	if (per_pulse > 0 && remainder < 2) {
-// 		for (a = 0; a < pulses; a++) {
-// 			for (b = workbeat_count - 1; b > workbeat_count - per_pulse - 1; b--) workbeat[a] = ConcatBin(workbeat[a], workbeat[b]);
-// 			workbeat_count = workbeat_count - per_pulse;
-// 		}
-// 		outbeat = 0;
-// 		for (a = 0; a < workbeat_count; a++) outbeat = ConcatBin(outbeat, workbeat[a]);
-// 		if (offset > 0) outbeat2 = rightRotate(offset, outbeat, steps);
-// 		else outbeat2 = outbeat;
-// 		return outbeat2;
-// 	} else {
-// 		if (pulses == 0) { pulses = 1; }
-// 		int groupa = pulses;
-// 		int groupb = pauses;
-// 		int iteration = 0;
-//
-// 		while (groupb > 1) {
-// 			if (groupa > groupb) {
-// 				int a_remainder = groupa - groupb;
-// 				trim_count = 0;
-// 				for (a = 0; a < groupa - a_remainder; a++) {
-// 					workbeat[a] = ConcatBin(workbeat[a], workbeat[workbeat_count - 1 - a]);
-// 					trim_count++;
-// 				}
-// 				workbeat_count = workbeat_count - trim_count;
-// 				groupa = groupb;
-// 				groupb = a_remainder;
-// 			} else if (groupb > groupa) {
-// 				int b_remainder = groupb - groupa;
-// 				trim_count = 0;
-// 				for (a = workbeat_count - 1; a >= groupa + b_remainder; a--) {
-// 					workbeat[workbeat_count - a - 1] = ConcatBin(workbeat[workbeat_count - a - 1], workbeat[a]);
-// 					trim_count++;
-// 				}
-// 				workbeat_count = workbeat_count - trim_count;
-// 				groupb = b_remainder;
-// 			} else if (groupa == groupb) {
-// 				trim_count = 0;
-// 				for (a = 0; a < groupa; a++) {
-// 					workbeat[a] = ConcatBin(workbeat[a], workbeat[workbeat_count - 1 - a]);
-// 					trim_count++;
-// 				}
-// 				workbeat_count = workbeat_count - trim_count;
-// 				groupb = 0;
-// 			}
-// 			iteration++;
-// 		}
-//
-// 		outbeat = 0;
-// 		for (a = 0; a < workbeat_count; a++) outbeat = ConcatBin(outbeat, workbeat[a]);
-//
-// 		if (offset > 0) outbeat2 = rightRotate(offset, outbeat, steps);
-//     else outbeat2 = outbeat;
-//
-// 		return outbeat2;
-// 	}
-// }
-//
-// int Tracks::rightRotate(int shift, uint16_t value, uint8_t pattern_length) {
-// 	uint16_t mask = ((1 << pattern_length) - 1);
-// 	value &= mask;
-// 	return ((value >> shift) | (value << (pattern_length - shift))) & mask;
-// }
-//
-// int Tracks::findlength(unsigned int bnry) {
-// 	boolean lengthfound = false;
-// 	int length = 1;
-// 	for (int q = 32; q >= 0; q--) {
-// 		int r = bitRead(bnry, q);
-// 		if (r == 1 && lengthfound == false) {
-// 			length = q + 1;
-// 			lengthfound = true;
-// 		}
-// 	}
-// 	return length;
-// }
-//
-// unsigned int Tracks::ConcatBin(unsigned int bina, unsigned int binb) {
-// 	int binb_len = findlength(binb);
-// 	unsigned int sum = (bina << binb_len);
-// 	return sum | binb;
-// }
+int Tracks::euclidean(int length, int density) {
+  int euclidean = 0;
+  if(density >= length) density = length;
+  int level = 0;
+  int divisor = length - density;
+  int remainders[MAX_STEP_INDEX + 1];
+  int counts[MAX_STEP_INDEX + 1];
+  remainders[0] = density;
+  do {
+    counts[level] = divisor / remainders[level];
+    remainders[level + 1] = divisor % remainders[level];
+    divisor = remainders[level];
+    ++level;
+  } while (remainders[level] > 1);
+  counts[level] = divisor;
+  int pattern[MAX_STEP_INDEX + 1];
+  build(pattern, level, counts, remainders);
+  for(int step = 0; step < length; ++step) bitWrite(euclidean, step, pattern[step]);
+  if(euclidean != 0) while(!bitRead(euclidean, 0)) rotate(euclidean, 0, length, 1);
+  return euclidean;
+}
+
+void Tracks::build(int pattern[], int level, int counts[], int remainders[]) {
+  int step = 0;
+  build(pattern, step, level, counts, remainders);
+}
+
+void Tracks::build(int pattern[], int &step, int level, int counts[], int remainders[]) {
+  if (level == -1) {
+    pattern[step] = 0;
+    ++step;
+  } else if (level == -2)  {
+    pattern[step] = 1;
+    ++step;
+  } else {
+    for (int index = 0; index < counts[level]; ++index) build(pattern, step, level - 1, counts, remainders);
+    if (remainders[level] != 0) build(pattern, step, level - 2, counts, remainders);
+  }
+}
+
+void Tracks::rotate(int &pattern, int start, int end, int offset) {
+  int original = pattern;
+  for(int index = start; index <= end; ++index) {
+    int set = index + offset;
+    if(set < start) set = end;
+    else if (set > end) set = start;
+    bitWrite(pattern, set, bitRead(original, index));
+  }
+}

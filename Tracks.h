@@ -17,8 +17,8 @@ enum OutMode {
   Gate = 2
 };
 
-enum TrackType {
-  Pattern,
+enum PatternType {
+  Programmed,
   Euclidean
 };
 
@@ -28,14 +28,16 @@ enum DividerType {
 };
 
 struct Track {
+  int pattern;
   int start;
   int end;
-  int pattern;
+  int length;
   int density;
-  TrackType type;
+  int offset;
+  int divider;
   PlayMode play;
   OutMode out;
-  int divider;
+  PatternType patternType;
   DividerType dividerType;
 };
 
@@ -46,7 +48,6 @@ struct TrackState {
   bool forward;
   int beat;
   int division;
-  int euclidean;
 };
 
 struct Settings {
@@ -58,12 +59,16 @@ class Tracks {
 public:
   Tracks();
   void updatePattern(int track, int position);
-  void applyOffset(int track, int offset);
+  void rotatePattern(int track, int offset);
+  void setOffset(int track, int offset);
+  void setDensity(int track, int offset);
+  void setLength(int track, int offset);
   void setStart(int track, int offset);
   void setEnd(int track, int offset);
   void setPlayMode(int track, int offset);
   void setOutMode(int track, int offset);
   void setDivider(int track, int offset);
+  void nextPatternType(int track);
   void nextDividerType(int track);
   int getStart(int track);
   int getEnd(int track);
@@ -72,6 +77,7 @@ public:
   int getPosition(int position);
   int getDivider(int track);
   int getStep(int track);
+  PatternType getPatternType(int track);
   DividerType getDividerType(int track);
   PlayMode getPlayMode(int track);
   OutMode getOutMode(int track);
@@ -88,9 +94,15 @@ private:
   void initialiseTrack(int track);
   void initialiseState(int track);
   void resetLength(int track);
-  void resetPattern(int track);
   void resetDivision(int track);
+  void resetPattern(int track);
+  void resetProgrammed(int track);
+  void resetEuclidean(int track);
   int calculateDivision(int divider, DividerType type);
+  int euclidean(int length, int density);
+  void build(int pattern[], int level, int counts[], int remainders[]);
+  void build(int pattern[], int &step, int level, int counts[], int remainders[]);
+  void rotate(int &pattern, int start, int end, int offset);
 };
 
 #endif

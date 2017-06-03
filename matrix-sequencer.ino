@@ -19,7 +19,8 @@ enum EditAction {
   EditOffset,
   EditPlayMode,
   EditOutMode,
-  DividerMode
+  EditDivider,
+  EditPatternType
 };
 
 struct EditMode {
@@ -157,50 +158,62 @@ void clearEditAction() {
 void moveCursor(int Offset, int max) {
     cursor += Offset;
     Utilities::cycle(cursor, 0, max);
+    drawCursor();
 }
 
 void lengthEdit(int change) {
   if (action != EditAction::EditLength) {
-    display.hideCursor();
-    setEditAction(EditAction::EditLength);
+    initialiseLengthEdit();
   }  else {
-    if (lengthMarker) tracks.setEnd(active, change);
-    else tracks.setStart(active, change);
+    if (tracks.getPatternType(active) == PatternType::Programmed) {
+      if (lengthMarker) tracks.setEnd(active, change);
+      else tracks.setStart(active, change);
+    } else if (tracks.getPatternType(active) == PatternType::Euclidean) {
+      tracks.setLength(active, change);
+    }
   }
-  display.drawLengthView(active, tracks.getStart(active), tracks.getEnd(active));
+  if (tracks.getPatternType(active) == PatternType::Programmed) display.drawLengthView(active, tracks.getStart(active), tracks.getEnd(active));
+  else if (tracks.getPatternType(active) == PatternType::Euclidean) display.drawLengthView(active, tracks.getLength(active));
 }
 
 void switchLengthMarker() {
   if (action != EditAction::EditLength) {
-    display.hideCursor();
-    setEditAction(EditAction::EditLength);
+    initialiseLengthEdit();
   }  else {
-    lengthMarker = !lengthMarker;
+    if (tracks.getPatternType(active) == PatternType::Programmed) lengthMarker = !lengthMarker;
   }
   display.drawLengthView(active, tracks.getStart(active), tracks.getEnd(active));
 }
 
+void initialiseLengthEdit() {
+  lengthMarker = true;
+  display.hideCursor();
+  setEditAction(EditAction::EditLength);
+}
+
 void movePatternCursor(int change) {
   if (action != EditAction::EditPattern) {
-    cursor = 0;
-    setEditAction(EditAction::EditPattern);
-    display.drawPatternView(active, tracks.getPattern(active));
+    initialisePatternEdit();
   } else {
-    moveCursor(change, tracks.getLength(active));
+    if (tracks.getPatternType(active) == PatternType::Programmed) moveCursor(change, tracks.getLength(active));
+    else if (tracks.getPatternType(active) == PatternType::Euclidean) tracks.setDensity(active, change);
   }
-  drawCursor();
+  display.drawPatternView(active, tracks.getPattern(active));
 }
 
 void patternEdit() {
   if (action != EditAction::EditPattern) {
-    cursor = 0;
-    display.showCursor();
-    setEditAction(EditAction::EditPattern);
+    initialisePatternEdit();
   } else {
-    tracks.updatePattern(active, cursor);
+    if (tracks.getPatternType(active) == PatternType::Programmed) tracks.updatePattern(active, cursor);
   }
-  drawCursor();
   display.drawPatternView(active, tracks.getPattern(active));
+}
+
+void initialisePatternEdit() {
+  cursor = 0;
+  if (tracks.getPatternType(active) == PatternType::Programmed) display.showCursor();
+  setEditAction(EditAction::EditPattern);
 }
 
 void offsetEdit(int change) {
@@ -208,7 +221,8 @@ void offsetEdit(int change) {
     display.hideCursor();
     setEditAction(EditAction::EditOffset);
   } else {
-    tracks.applyOffset(active, change);
+    if (tracks.getPatternType(active) == PatternType::Programmed) tracks.rotatePattern(active, change);
+    else if (tracks.getPatternType(active) == PatternType::Euclidean) tracks.setOffset(active, change);
   }
   display.drawPatternView(active, tracks.getPattern(active));
 }
@@ -234,9 +248,9 @@ void outModeEdit(int change) {
 }
 
 void dividerEdit(int change) {
-  if (action != EditAction::DividerMode) {
+  if (action != EditAction::EditDivider) {
     display.hideCursor();
-    setEditAction(EditAction::DividerMode);
+    setEditAction(EditAction::EditDivider);
   } else {
     tracks.setDivider(active, change);
   }
@@ -244,13 +258,23 @@ void dividerEdit(int change) {
 }
 
 void switchDividerType() {
-  if (action != EditAction::DividerMode) {
+  if (action != EditAction::EditDivider) {
     display.hideCursor();
-    setEditAction(EditAction::DividerMode);
+    setEditAction(EditAction::EditDivider);
   } else {
     tracks.nextDividerType(active);
   }
   display.drawDividerView(active, tracks.getDivider(active), tracks.getDividerType(active));
+}
+
+void switchPatternType() {
+  if (action != EditAction::EditPatternType) {
+    display.hideCursor();
+    setEditAction(EditAction::EditPatternType);
+  } else {
+    tracks.nextPatternType(active);
+  }
+  display.drawPatternTypeView(active, tracks.getPatternType(active));
 }
 
 void drawCursor() {
@@ -266,7 +290,7 @@ void drawTracks() {
 
 void initialiseEditModes() {
   editModes[0] = EditMode{lengthEdit, switchLengthMarker, movePatternCursor, patternEdit, offsetEdit};
-  editModes[1] = EditMode{dividerEdit, switchDividerType, playModeEdit, noActionButton, outModeEdit};
+  editModes[1] = EditMode{dividerEdit, switchDividerType, playModeEdit, switchPatternType, outModeEdit};
   edit = 0;
 }
 
