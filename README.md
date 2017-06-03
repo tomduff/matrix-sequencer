@@ -6,11 +6,11 @@ Implementation of a 3 track programmable or Euclidean pattern sequencer using th
 ### Edit Mode 1
 + 1/Length
   + Rotate - Change length start or end length marker to define loop points
-  + Click - **Programmed Mode :** Switch between start and end markers  **Euclidean mode:** only the end marker can be moved - effectively defining a length)
+  + Click - **Programmed Mode :** Switch between start and end markers  **Euclidean mode:** only the end marker can be moved to define a length
   + Hold (~2s) - Make Track 1 the active editing track
 + 2/Density
   + Rotate - **Programmed Mode :** Move the edit cursor **Euclidean mode:** Change the density
-  + Click - Invert the state of the step under the cursor (on/off)
+  + Click - **Programmed Mode :** Invert the state of the step under the cursor (on/off) **Euclidean mode:** Nothing
   + Hold (~2s) - Make Track 2 the active editing track
 + 3/Offset
   + Rotate - Offset in the steps in the direction turned. Note - steps outside the current length remain in place.
@@ -39,7 +39,7 @@ Implementation of a 3 track programmable or Euclidean pattern sequencer using th
 + Offbeat - Inverse of Track 1
 
 ## Guidance
-This is a work in progress!
+**_This is a work in progress!_**
 + display reverts to a play view after ~5 seconds of not twiddling knobs
 + Saving of changes (if there are any) occurs when you switch edit mode or when the display reverts to the play view
 + sync resets on the rising edge
@@ -51,3 +51,4 @@ This is a work in progress!
 + Adjust brightness and encoder sensitivity
 + Internal clock (including Gate and option to send to Offbeat output)
 + I'm open to ideas
++ Some testing.... :)
