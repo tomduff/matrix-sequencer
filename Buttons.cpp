@@ -9,29 +9,34 @@
 
 
 Buttons::Buttons()
-  : holdStart(0), oldButton(Control::NoControl) {
+  : holdStart(0), oldButton(Control::NoControl), oldState(ButtonState::Released) {
 }
 
 void Buttons::initialise() {
 }
 
 ButtonEvent Buttons::event() {
-  ButtonEvent state = ButtonEvent{Control::NoControl, ButtonState::Released};
-  Control currentButton = readButton();
-
-  // A new button has been clicked so start the hold timer
-  if (currentButton != Control::NoControl && (oldButton == Control::NoControl || oldButton != currentButton))  {
-    holdStart = millis();
+  ButtonEvent event = ButtonEvent{Control::NoControl, ButtonState::Released};
+  Control button = readButton();
+  ButtonState state = ButtonState::Released;
+  if(button != Control::NoControl) {
+    if (button != oldButton) {
+      holdStart = millis();
+    } else if (button == oldButton && isHeld()) {
+      state = ButtonState::Held;
+      event.control = button;
+      if(oldState != ButtonState::Held) {
+        event.state = state;
+      }
+    }
+  } else if (oldState != ButtonState::Held) {
+      event.control = oldButton;
+      event.state = ButtonState::Clicked;
+      holdStart = 0;
   }
-  // If a button is now released then a state change has occurred
-  else if (currentButton == Control::NoControl && oldButton != Control::NoControl) {
-    state.control = oldButton;
-    state.state = isHeld() ? ButtonState::Held : ButtonState::Clicked;
-    holdStart = 0;
-  }
-
-  oldButton = currentButton;
-  return state;
+  oldButton = button;
+  oldState = state;
+  return event;
 }
 
 Control Buttons::readButton() {

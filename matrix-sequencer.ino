@@ -109,7 +109,6 @@ void handleEncoderEvent(EncoderEvent event) {
 }
 
 void handleButtonEvent(ButtonEvent event) {
-  if (event.control != Control::NoControl) lastEdit = millis();
   if (event.state == ButtonState::Clicked) handleButtonClick(event.control);
   else if (event.state == ButtonState::Held) handleButtonHeld(event.control);
 }
@@ -117,13 +116,15 @@ void handleButtonEvent(ButtonEvent event) {
 void handleButtonClick(Control control) {
   switch(control) {
     case Control::One:
-        editModes[edit].oneClick();
-    break;
+      lastEdit = millis();
+      editModes[edit].oneClick();
+      break;
   case Control::Two:
-        editModes[edit].twoClick();
+      lastEdit = millis();
+      editModes[edit].twoClick();
       break;
     case Control::Three:
-        nextEditMode();
+      nextEditMode();
       break;
     case Control::NoControl:
       break;

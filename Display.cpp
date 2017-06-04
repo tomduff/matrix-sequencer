@@ -4,7 +4,7 @@
 #define row(t) (t * 2)
 
 #define INDICATOR_TIME 25
-#define ROW_INDICATOR_TIME 200
+#define TRACK_INDICATOR_TIME 500
 #define FLASH_TIME_ON 50
 #define FLASH_TIME_OFF 100
 #define INDICATOR_ROW 7
@@ -77,12 +77,16 @@ void Display::updateIndicator(Indicator& indicator) {
 
 void Display::updateTrackIndicator(TrackIndicator& indicator) {
   if (indicator.active) {
-    if (indicator.start == 0 || (millis() - indicator.start > ROW_INDICATOR_TIME)) {
+    int row = row(indicator.track);
+    setRows(row, ALL_OFF);
+    cursorMask[row].state = cursorState ? ALL_ON : ALL_OFF;
+    cursorMask[row + 1].state = cursorState ? ALL_ON : ALL_OFF;
+    if (indicator.start == 0 || (millis() - indicator.start > TRACK_INDICATOR_TIME)) {
       indicator.active = false;
       indicator.start = 0;
     }
-    setRow(row(indicator.track), indicator.active ? ALL_ON : ALL_OFF);
-    setRow(row(indicator.track) + 1, indicator.active ? ALL_ON : ALL_OFF);
+    //setRow(row(indicator.track), indicator.active ? ALL_ON : ALL_OFF);
+    //setRow(row(indicator.track) + 1, indicator.active ? ALL_ON : ALL_OFF);
   }
 }
 

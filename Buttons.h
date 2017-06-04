@@ -25,6 +25,7 @@ private:
   Control readButton();
   unsigned long holdStart;
   Control oldButton;
+  ButtonState oldState;
 };
 
 #endif
