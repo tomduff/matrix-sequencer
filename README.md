@@ -34,6 +34,7 @@ Implementation of a 3 track programmable or Euclidean pattern sequencer using th
 
 
 ### Edit Mode 3 - Clock settings
+_Note - these settings are not currently persisted, nor are any useful indicators displayed when editing_
 + 1/Length
   + Rotate - Change the internal clock speed (~60bpm to 240bpm) changes by 1 bpm at a time so quite slow)
   + Click -  Start/Stop the internal clock (when running the external clock input is ignored)
@@ -51,7 +52,7 @@ Implementation of a 3 track programmable or Euclidean pattern sequencer using th
 + 1 - As programmed on Track 1
 + 2 - As programmed on Track 2
 + 3 - As programmed on Track 3
-+ Offbeat - Inverse of Track 1
++ Offbeat - Inverse of Track 1 or the clock signal
 
 ## Guidance
 **_This is a work in progress!_**
