@@ -5,6 +5,8 @@
 
 #define INDICATOR_TIME 25
 #define ROW_INDICATOR_TIME 200
+#define FLASH_TIME_ON 50
+#define FLASH_TIME_OFF 100
 #define INDICATOR_ROW 7
 #define MODE_ROW 6
 #define CLOCK_INDICATOR 0
@@ -13,13 +15,14 @@
 #define TRACK_TWO_INDICATOR 5
 #define TRACK_THREE_INDICATOR 7
 #define OFF_BEAT_INDICATOR 3
-#define FLASH_TIME 250
 #define MATRIX_ROWS 8
 #define MATRIX_COLUMNS 8
 #define ALL_ON 255
 #define LED_ON 1
 #define ALL_OFF 0
 #define LED_OFF 0
+#define TRACKS 3
+#define CURSORS TRACKS
 
 
 Display::Display()
@@ -34,55 +37,80 @@ void Display::initialise() {
 }
 
 void Display::render() {
-
+  updateCursors();
   updateIndicators();
-
-  for (int row = 0; row < MATRIX_ROWS; ++ row) {
-    if (((nextDisplay[row].state ^ currentDisplay[row].state) != 0) || (currentCursor.active && row == currentCursor.row)) {
-      matrix.setRow(row, nextDisplay[row].state);
-      currentDisplay[row] = nextDisplay[row];
-    }
-  }
-  updateCursor();
+  for (int row = 0; row < MATRIX_ROWS; ++ row) matrix.setRow(row, display[row].state ^ cursorMask[row].state);
 }
 
 void Display::updateIndicators() {
   updateIndicator(clock);
   updateIndicator(reset);
-  for(int track = 0; track <= 3; ++track) {
-    updateIndicator(tracks[track]);
-  }
+  for(int track = 0; track <= TRACKS; ++track) updateIndicator(tracks[track]);
   updateTrackIndicator(activeTrack);
 }
 
-void Display::updateCursor() {
+void Display::updateCursors() {
+  clear(cursorMask);
+  unsigned long now = millis();
+  if ((cursorState && (now - cursorTime) > FLASH_TIME_ON) || (!cursorState && (now - cursorTime) > FLASH_TIME_OFF)) {
+    cursorState = !cursorState;
+    cursorTime = now;
+  }
+  for (int cursor = 0; cursor < CURSORS; ++cursor) updateCursorMask(cursor);
+}
 
-    if(nextCursor.active) {
-      unsigned long now = millis();
-      if(!currentCursor.active || (currentCursor.row != nextCursor.row) || (currentCursor.position != nextCursor.position)) {
-        cursorTime = now;
-        cursorState = !bitRead(currentDisplay[nextCursor.row].state, nextCursor.position);
-      } else if (cursorTime != 0 && (now - cursorTime > FLASH_TIME)) {
-        cursorTime = now;
-        cursorState = !cursorState;
-      }
-      matrix.setLed(nextCursor.row, nextCursor.position, cursorState);
-    } else {
-      cursorTime = 0;
+void Display::updateCursorMask(int cursor) {
+    if(cursors[cursor].active) {
+      bitWrite(cursorMask[cursors[cursor].row].state, cursors[cursor].position, cursorState);
     }
-    currentCursor = nextCursor;
 }
 
-void Display::showCursor() {
-  nextCursor.active = true;
+void Display::updateIndicator(Indicator& indicator) {
+  if (indicator.active) {
+    if (indicator.start == 0 || (millis() - indicator.start > INDICATOR_TIME)) {
+      indicator.active = false;
+      indicator.start = 0;
+    }
+    setLed(indicator.row, indicator.column, indicator.active);
+  }
 }
 
-void Display::hideCursor() {
-  nextCursor.active = false;
+void Display::updateTrackIndicator(TrackIndicator& indicator) {
+  if (indicator.active) {
+    if (indicator.start == 0 || (millis() - indicator.start > ROW_INDICATOR_TIME)) {
+      indicator.active = false;
+      indicator.start = 0;
+    }
+    setRow(row(indicator.track), indicator.active ? ALL_ON : ALL_OFF);
+    setRow(row(indicator.track) + 1, indicator.active ? ALL_ON : ALL_OFF);
+  }
+}
+
+void Display::showCursor(int track) {
+  cursors[track].active = true;
+}
+
+void Display::hideCursor(int track) {
+  cursors[track].active = false;
 }
 
 void Display::drawPatternView(int track, int pattern) {
     setRows(row(track), pattern);
+}
+
+void Display::drawPlayView(int track, int position, int pattern) {
+  drawPatternView(track, pattern);
+  drawTrackCursor(track, position);
+  showCursor(track);
+  // int state = 0;
+  // if(position < MATRIX_COLUMNS) {
+  //   state = lowByte(pattern);
+  //   position += MATRIX_COLUMNS;
+  // } else {
+  //   state = highByte(pattern);
+  // }
+  // bitSet(state, position);
+  // setRows(row(track), state);
 }
 
 void Display::drawLengthView(int track, int start, int end) {
@@ -146,18 +174,6 @@ void Display::drawPatternTypeView(int track, PatternType mode) {
     }
 }
 
-void Display::drawPlayView(int track, int position, int pattern) {
-  int state = 0;
-  if(position < MATRIX_COLUMNS) {
-    state = lowByte(pattern);
-    position += MATRIX_COLUMNS;
-  } else {
-    state = highByte(pattern);
-  }
-  bitSet(state, position);
-  setRows(row(track), state);
-}
-
 void Display::drawDividerView(int track, int divider, DividerType type) {
   byte state = 0;
   bitSet(state, divider);
@@ -179,16 +195,20 @@ void Display::setRows(int row, int state) {
 }
 
 void Display::setLed(int row, int column, bool state) {
-  bitWrite(nextDisplay[row].state, column, state);
+  bitWrite(display[row].state, column, state);
 }
 
 void Display::setRow(int row, byte state) {
-  nextDisplay[row].state = state;
+  display[row].state = state;
 }
 
 void Display::clear() {
+  clear(display);
+}
+
+void Display::clear(DisplayRow rows[]) {
   for (int row = 0; row < MATRIX_ROWS; ++row) {
-    nextDisplay[row].state = ALL_OFF;
+    rows[row].state = ALL_OFF;
   }
 }
 
@@ -215,44 +235,20 @@ void Display::showIndicator(Indicator& indicator) {
     indicator.start = millis();
 }
 
-void Display::updateIndicator(Indicator& indicator) {
-  if (indicator.active) {
-    if (indicator.start == 0 || (millis() - indicator.start > INDICATOR_TIME)) {
-      indicator.active = false;
-      indicator.start = 0;
-    }
-    setLed(indicator.row, indicator.column, indicator.active);
-  }
-}
-
-void Display::updateTrackIndicator(TrackIndicator& indicator) {
-  if (indicator.active) {
-    if (indicator.start == 0 || (millis() - indicator.start > ROW_INDICATOR_TIME)) {
-      indicator.active = false;
-      indicator.start = 0;
-    }
-    setRow(row(indicator.track), indicator.active ? ALL_ON : ALL_OFF);
-    setRow(row(indicator.track) + 1, indicator.active ? ALL_ON : ALL_OFF);
-  }
-}
-
 void Display::indicateMode(int mode) {
   byte state = 0;
   bitSet(state, mode);
   setRow(MODE_ROW, state);
 }
 
-void Display::drawRowCursor(int row, int position) {
-  nextCursor.row = row;
-  nextCursor.position = MATRIX_COLUMNS - position - 1;
-}
-
-void Display::drawRowsCursor(int row, int position) {
+void Display::drawTrackCursor(int track, int position) {
+  int row = row(track);
   if(position >= MATRIX_ROWS) {
     ++row;
     position %= MATRIX_ROWS;
   }
-  drawRowCursor(row, position);
+  cursors[track].row = row;
+  cursors[track].position = position;
 }
 
 void Display::fill(int &value, int length, int bit) {

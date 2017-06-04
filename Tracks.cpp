@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 
-#define CONFIG_VERSION 105
+#define CONFIG_VERSION 106
 #define CONFIG_ADDRESS 0
 #define MAX_STEP_INDEX 15
 #define MAX_DIVIDER 7
@@ -186,7 +186,7 @@ void Tracks::stepPosition(int track) {
     case Pendulum:
       if (state[track].forward) ++state[track].position;
       else --state[track].position;
-      state[track].position = Utilities::reverse(state[track].position, 0, state[track].length);
+      state[track].forward = Utilities::reverse(state[track].position, 0, state[track].length);
     break;
   }
 }

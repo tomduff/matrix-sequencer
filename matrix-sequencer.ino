@@ -66,7 +66,7 @@ void loop() {
   handleButtonEvent(buttons.event());
 
   if (action == EditAction::NoAction || lastEdit == 0 || (millis() - lastEdit > EDIT_WAIT)) {
-    display.hideCursor();
+    display.hideCursor(active);
     clearEditAction();
   }
 
@@ -187,7 +187,7 @@ void switchLengthMarker() {
 
 void initialiseLengthEdit() {
   lengthMarker = true;
-  display.hideCursor();
+  display.hideCursor(active);
   setEditAction(EditAction::EditLength);
 }
 
@@ -212,13 +212,13 @@ void patternEdit() {
 
 void initialisePatternEdit() {
   cursor = 0;
-  if (tracks.getPatternType(active) == PatternType::Programmed) display.showCursor();
+  if (tracks.getPatternType(active) == PatternType::Programmed) display.showCursor(active);
   setEditAction(EditAction::EditPattern);
 }
 
 void offsetEdit(int change) {
   if (action != EditAction::EditOffset) {
-    display.hideCursor();
+    display.hideCursor(active);
     setEditAction(EditAction::EditOffset);
   } else {
     if (tracks.getPatternType(active) == PatternType::Programmed) tracks.rotatePattern(active, change);
@@ -229,7 +229,7 @@ void offsetEdit(int change) {
 
 void playModeEdit(int change) {
   if (action != EditAction::EditPlayMode) {
-    display.hideCursor();
+    display.hideCursor(active);
     setEditAction(EditAction::EditPlayMode);
   } else {
     tracks.setPlayMode(active, change);
@@ -239,7 +239,7 @@ void playModeEdit(int change) {
 
 void outModeEdit(int change) {
   if (action != EditAction::EditOutMode) {
-    display.hideCursor();
+    display.hideCursor(active);
     setEditAction(EditAction::EditOutMode);
   } else {
     tracks.setOutMode(active, change);
@@ -249,7 +249,7 @@ void outModeEdit(int change) {
 
 void dividerEdit(int change) {
   if (action != EditAction::EditDivider) {
-    display.hideCursor();
+    display.hideCursor(active);
     setEditAction(EditAction::EditDivider);
   } else {
     tracks.setDivider(active, change);
@@ -259,7 +259,7 @@ void dividerEdit(int change) {
 
 void switchDividerType() {
   if (action != EditAction::EditDivider) {
-    display.hideCursor();
+    display.hideCursor(active);
     setEditAction(EditAction::EditDivider);
   } else {
     tracks.nextDividerType(active);
@@ -269,7 +269,7 @@ void switchDividerType() {
 
 void switchPatternType() {
   if (action != EditAction::EditPatternType) {
-    display.hideCursor();
+    display.hideCursor(active);
     setEditAction(EditAction::EditPatternType);
   } else {
     tracks.nextPatternType(active);
@@ -278,8 +278,8 @@ void switchPatternType() {
 }
 
 void drawCursor() {
-  display.showCursor();
-  display.drawRowsCursor(active * 2, cursor);
+  display.showCursor(active);
+  display.drawTrackCursor(active, cursor);
 }
 
 void drawTracks() {
