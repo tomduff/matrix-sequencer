@@ -33,7 +33,7 @@ Implementation of a 3 track programmable or Euclidean pattern sequencer using th
   + Hold (~2s) - Make Track 3 the active editing track
 
 
-### Edit Mode 2 - Clock settings
+### Edit Mode 3 - Clock settings
 + 1/Length
   + Rotate - Change the internal clock speed (~60bpm to 240bpm) changes by 1 bpm at a time so quite slow)
   + Click -  Start/Stop the internal clock (when running the external clock input is ignored)
