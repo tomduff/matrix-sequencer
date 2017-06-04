@@ -35,7 +35,8 @@ public:
   virtual void initialise();
   void clear();
   void render();
-  void drawPatternView(int track, int pattern);
+  void drawProgrammedView(int track, int pattern);
+  void drawEuclideanView(int track, int pattern);
   void drawOffsetView(int track, int pattern);
   void drawLengthView(int track, int length);
   void drawLengthView(int track, int start, int end, bool active);

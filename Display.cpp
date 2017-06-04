@@ -85,8 +85,6 @@ void Display::updateTrackIndicator(TrackIndicator& indicator) {
       indicator.active = false;
       indicator.start = 0;
     }
-    //setRow(row(indicator.track), indicator.active ? ALL_ON : ALL_OFF);
-    //setRow(row(indicator.track) + 1, indicator.active ? ALL_ON : ALL_OFF);
   }
 }
 
@@ -98,8 +96,13 @@ void Display::hideCursor(int track) {
   cursors[track].active = false;
 }
 
-void Display::drawPatternView(int track, int pattern) {
+void Display::drawProgrammedView(int track, int pattern) {
   showCursor(track);
+  setRows(row(track), pattern);
+}
+
+void Display::drawEuclideanView(int track, int pattern) {
+  hideCursor(track);
   setRows(row(track), pattern);
 }
 

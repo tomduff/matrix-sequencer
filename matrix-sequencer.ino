@@ -6,11 +6,12 @@
 #include "Output.h"
 #include "Tracks.h"
 #include "Utilities.h"
+#include "ClockGenerator.h"
 
 #define EDIT_WAIT 7500
-#define EDIT_MODES 2
-#define TRACKS 4
-#define DRAWN_TRACKS 3
+#define EDIT_MODES 3
+#define EDIT_TRACKS 3
+#define OFF_BEAT 3
 
 enum EditAction {
   NoAction,
@@ -39,12 +40,14 @@ Input reset = Input(1);
 Output outs[4] = {Output(11), Output(12), Output(13), Output(17)};
 Tracks tracks = Tracks();
 EditMode editModes[EDIT_MODES];
+ClockGenerator clockGenerator = ClockGenerator();
 int edit = 0;
 int cursor = 0;
 int active = 0;
 EditAction action = EditAction::NoAction;
 unsigned long lastEdit = 0;
 bool lengthMarker = true;
+bool offBeatOut = true;
 
 void setup() {
   initialiseEditModes();
@@ -53,15 +56,17 @@ void setup() {
   buttons.initialise();
   clock.initialise();
   reset.initialise();
-  for(int track = 0; track < TRACKS; ++track) outs[track].initialise();
+  for(int track = 0; track < EDIT_TRACKS; ++track) outs[track].initialise();
   clearEditAction();
   handleButtonHeld(Control::One);
 }
 
 void loop() {
-
   handleReset(reset.signal());
-  handleClock(clock.signal());
+
+  if(!clockGenerator.isRunning()) handleClock(clock.signal());
+  else handleClock(clockGenerator.tick());
+
   handleEncoderEvent(encoders.event());
   handleButtonEvent(buttons.event());
 
@@ -74,15 +79,23 @@ void loop() {
   display.render();
 }
 
+void drawTracks() {
+  for(int track = 0; track < EDIT_TRACKS; ++track) {
+    if(track != active || action == EditAction::NoAction) display.drawPlayView(track, tracks.getPosition(track), tracks.getPattern(track));
+  }
+}
+
 void handleReset(Signal signal) {
-  if(signal == Signal::Rising) tracks.reset();
+  if (signal == Signal::Rising) tracks.reset();
   if (signal == Signal::Rising || signal == Signal::High) display.indicateReset();
 }
 
 void handleClock(Signal signal) {
   if (signal == Signal::Rising) tracks.stepOn();
   if (signal == Signal::Rising || signal == Signal::High) display.indicateClock();
-  for(int track = 0; track < TRACKS; ++track) handleStep(signal, track);
+  for(int track = 0; track < EDIT_TRACKS; ++track) handleStep(signal, track);
+  if (offBeatOut) handleStep(signal, OFF_BEAT);
+  else outs[OFF_BEAT].signal(signal, OutMode::Clock, 1);
 }
 
 void handleStep(Signal signal, int track) {
@@ -198,18 +211,23 @@ void movePatternCursor(int change) {
     if (tracks.getPatternType(active) == PatternType::Programmed) moveCursor(change, tracks.getLength(active));
     else if (tracks.getPatternType(active) == PatternType::Euclidean) tracks.setDensity(active, change);
   }
-  display.drawPatternView(active, tracks.getPattern(active));
+  patternView();
 }
 
 void patternEdit() {
   if (action != EditAction::EditPattern) initialisePatternEdit();
   else if (tracks.getPatternType(active) == PatternType::Programmed) tracks.updatePattern(active, cursor);
-  display.drawPatternView(active, tracks.getPattern(active));
+  patternView();
 }
 
 void initialisePatternEdit() {
   cursor = 0;
   setEditAction(EditAction::EditPattern);
+}
+
+void patternView() {
+  if (tracks.getPatternType(active) == PatternType::Programmed) display.drawProgrammedView(active, tracks.getPattern(active));
+  else if (tracks.getPatternType(active) == PatternType::Euclidean) display.drawEuclideanView(active, tracks.getPattern(active));
 }
 
 void offsetEdit(int change) {
@@ -252,15 +270,31 @@ void switchPatternType() {
   display.drawPatternTypeView(active, tracks.getPatternType(active));
 }
 
-void drawTracks() {
-  for(int track = 0; track < DRAWN_TRACKS; ++track) {
-    if(track != active || action == EditAction::NoAction) display.drawPlayView(track, tracks.getPosition(track), tracks.getPattern(track));
-  }
+void clockSpeedEdit(int change) {
+  clockGenerator.setSpeed(change);
+}
+
+void clockWidthEdit(int change) {
+  clockGenerator.setWidth(change);
+}
+
+void clockMulitplierEdit(int change) {
+  clockGenerator.setMulitplier(change);
+}
+
+void startStopClock() {
+  if(clockGenerator.isRunning()) clockGenerator.stop();
+  else clockGenerator.start();
+}
+
+void switchOffBeatOut() {
+  offBeatOut = !offBeatOut;
 }
 
 void initialiseEditModes() {
   editModes[0] = EditMode{lengthEdit, switchLengthMarker, movePatternCursor, patternEdit, offsetEdit};
   editModes[1] = EditMode{dividerEdit, switchDividerType, playModeEdit, switchPatternType, outModeEdit};
+  editModes[2] = EditMode{clockSpeedEdit, startStopClock, clockWidthEdit, switchOffBeatOut, clockMulitplierEdit};
   edit = 0;
 }
 

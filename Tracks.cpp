@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 
-#define CONFIG_VERSION 106
+#define CONFIG_VERSION 107
 #define CONFIG_ADDRESS 0
 #define MAX_STEP_INDEX 15
 #define MAX_DIVIDER 7
