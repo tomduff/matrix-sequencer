@@ -96,7 +96,7 @@ void Tracks::setOutMode(int track, int offset) {
 
 void Tracks::setDivider(int track, int offset) {
   tracks[track].divider += offset;
-  Utilities::cycle(tracks[track].divider, 0, MAX_DIVIDER);
+  Utilities::bound(tracks[track].divider, 0, MAX_DIVIDER);
   resetDivision(track);
   change = true;
 }
