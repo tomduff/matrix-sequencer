@@ -95,13 +95,19 @@ void Display::hideCursor(int track) {
 }
 
 void Display::drawPatternView(int track, int pattern) {
-    setRows(row(track), pattern);
+  showCursor(track);
+  setRows(row(track), pattern);
+}
+
+void Display::drawOffsetView(int track, int pattern) {
+  hideCursor(track);
+  setRows(row(track), pattern);
 }
 
 void Display::drawPlayView(int track, int position, int pattern) {
-  drawPatternView(track, pattern);
-  drawTrackCursor(track, position);
   showCursor(track);
+  setRows(row(track), pattern);
+  setTrackCursor(track, position);
   // int state = 0;
   // if(position < MATRIX_COLUMNS) {
   //   state = lowByte(pattern);
@@ -113,72 +119,75 @@ void Display::drawPlayView(int track, int position, int pattern) {
   // setRows(row(track), state);
 }
 
-void Display::drawLengthView(int track, int start, int end) {
-    int state = 0;
-    setRange(state, start, end, LED_ON);
-    setRows(row(track), state);
+void Display::drawLengthView(int track, int start, int end, bool active) {
+  setTrackCursor(track, active ? end : start);
+  showCursor(track);
+  int state = 0;
+  setRange(state, start, end, LED_ON);
+  setRows(row(track), state);
 }
 
 void Display::drawLengthView(int track, int length) {
-    int state = 0;
-    fill(state, length, LED_ON);
-    setRows(row(track), state);
+  drawLengthView(track, 0, length, true);
 }
 
 void Display::drawPlayModeView(int track, PlayMode mode) {
-    switch(mode) {
-      case PlayMode::Forward:
-        setRow(row(track), B00000111);
-        break;
-      case PlayMode::Backward:
-        setRow(row(track), B11100000);
+  hideCursor(track);
+  switch(mode) {
+    case PlayMode::Forward:
+      setRow(row(track), B00000111);
       break;
-      case PlayMode::Random:
-        setRow(row(track), B10100010);
-      break;
-      case PlayMode::Pendulum:
-        setRow(row(track), B11100111);
-      break;
-      break;
-    }
-    setRow(row(track) + 1, ALL_OFF);
+    case PlayMode::Backward:
+      setRow(row(track), B11100000);
+    break;
+    case PlayMode::Random:
+      setRow(row(track), B10100010);
+    break;
+    case PlayMode::Pendulum:
+      setRow(row(track), B11100111);
+    break;
+    break;
+  }
+  setRow(row(track) + 1, ALL_OFF);
 }
 
 void Display::drawOutModeView(int track, OutMode mode) {
-    switch(mode) {
-      case OutMode::Trigger:
-        setRow(row(track), B00000010);
-        setRow(row(track) + 1, B00000101);
-        break;
-      case OutMode::Clock:
-        setRow(row(track), B00001110);
-        setRow(row(track) + 1, B00010001);
+  hideCursor(track);
+  switch(mode) {
+    case OutMode::Trigger:
+      setRow(row(track), B00000010);
+      setRow(row(track) + 1, B00000101);
       break;
-      case OutMode::Gate:
-        setRow(row(track), B01111110);
-        setRow(row(track) + 1, B10000001);
-      break;
-    }
+    case OutMode::Clock:
+      setRow(row(track), B00001110);
+      setRow(row(track) + 1, B00010001);
+    break;
+    case OutMode::Gate:
+      setRow(row(track), B01111110);
+      setRow(row(track) + 1, B10000001);
+    break;
+  }
 }
 
 void Display::drawPatternTypeView(int track, PatternType mode) {
-    switch(mode) {
-      case PatternType::Programmed:
-        setRow(row(track), ALL_ON);
-        setRow(row(track) + 1, ALL_OFF);
-        break;
-      case PatternType::Euclidean:
-        setRow(row(track), ALL_OFF);
-        setRow(row(track) + 1, ALL_ON);
+  hideCursor(track);
+  switch(mode) {
+    case PatternType::Programmed:
+      setRow(row(track), ALL_ON);
+      setRow(row(track) + 1, ALL_OFF);
       break;
-    }
+    case PatternType::Euclidean:
+      setRow(row(track), ALL_OFF);
+      setRow(row(track) + 1, ALL_ON);
+    break;
+  }
 }
 
 void Display::drawDividerView(int track, int divider, DividerType type) {
+  hideCursor(track);
   byte state = 0;
   bitSet(state, divider);
   setRow(row(track), state);
-
   switch(type) {
     case Beat:
       setRow(row(track) + 1, B00000001);
@@ -241,7 +250,7 @@ void Display::indicateMode(int mode) {
   setRow(MODE_ROW, state);
 }
 
-void Display::drawTrackCursor(int track, int position) {
+void Display::setTrackCursor(int track, int position) {
   int row = row(track);
   if(position >= MATRIX_ROWS) {
     ++row;

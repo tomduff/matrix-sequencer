@@ -35,23 +35,24 @@ public:
   virtual void initialise();
   void clear();
   void render();
-  void showCursor(int track);
-  void hideCursor(int track);
   void drawPatternView(int track, int pattern);
+  void drawOffsetView(int track, int pattern);
   void drawLengthView(int track, int length);
-  void drawLengthView(int track, int start, int end);
+  void drawLengthView(int track, int start, int end, bool active);
   void drawPlayModeView(int track, PlayMode mode);
   void drawOutModeView(int track, OutMode mode);
   void drawPlayView(int track, int position, int pattern);
   void drawDividerView(int track, int divider, DividerType type);
   void drawPatternTypeView(int track, PatternType mode);
-  void drawTrackCursor(int track, int position);
+  void setTrackCursor(int track, int position);
   void indicateReset();
   void indicateClock();
   void indicateTrack(int track);
   void indicateActiveTrack(int track);
   void indicateMode(int mode);
 private:
+  void showCursor(int track);
+  void hideCursor(int track);
   void clear(DisplayRow rows[]);
   void showIndicator(Indicator& indicator);
   void updateIndicators();

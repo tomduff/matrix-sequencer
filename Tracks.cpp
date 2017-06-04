@@ -252,14 +252,16 @@ void Tracks::resetPattern(int track) {
 }
 
 void Tracks::resetProgrammed(int track) {
+  state[track].pattern = 0;
   int index = 0;
-  for (int step = tracks[track].start; step <=tracks[track].end; ++step) {
+  for (int step = tracks[track].start; step <= tracks[track].end; ++step) {
     bitWrite(state[track].pattern, index, bitRead(tracks[track].pattern, step));
     ++index;
   }
 }
 
 void Tracks::resetEuclidean(int track) {
+  state[track].pattern = 0;
   state[track].pattern = euclidean(tracks[track].length + 1, tracks[track].density + 1);
   if (tracks[track].offset > 0) rotate(state[track].pattern, 0, tracks[track].length, tracks[track].offset);
 }
@@ -318,10 +320,11 @@ void Tracks::build(int pattern[], int &step, int level, int counts[], int remain
 
 void Tracks::rotate(int &pattern, int start, int end, int offset) {
   int original = pattern;
+  int length = end - start;
   for(int index = start; index <= end; ++index) {
     int set = index + offset;
-    if(set < start) set = set + end + 1;
-    else if (set > end) set = set - end - 1;
+    if (set < start) set = set + length + 1;
+    else if (set > end) set = set - length - 1;
     bitWrite(pattern, set, bitRead(original, index));
   }
 }
