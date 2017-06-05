@@ -9,6 +9,7 @@
 #include "ClockGenerator.h"
 
 #define EDIT_WAIT 7500
+#define CLOCK_WAIT 5000
 #define EDIT_MODES 3
 #define EDIT_TRACKS 3
 #define OFF_BEAT 3
@@ -45,9 +46,12 @@ int edit = 0;
 int cursor = 0;
 int active = 0;
 EditAction action = EditAction::NoAction;
+unsigned long now =  0;
 unsigned long lastEdit = 0;
+unsigned long lastClock = 0;
 bool lengthMarker = true;
 bool offBeatOut = true;
+bool clocked = false;
 
 void setup() {
   initialiseEditModes();
@@ -62,6 +66,7 @@ void setup() {
 }
 
 void loop() {
+  now = millis();
   handleReset(reset.signal());
 
   if(!clockGenerator.isRunning()) handleClock(clock.signal());
@@ -70,7 +75,7 @@ void loop() {
   handleEncoderEvent(encoders.event());
   handleButtonEvent(buttons.event());
 
-  if (action == EditAction::NoAction || lastEdit == 0 || (millis() - lastEdit > EDIT_WAIT)) {
+  if (action == EditAction::NoAction || lastEdit == 0 || (now - lastEdit > EDIT_WAIT)) {
     clearEditAction();
   }
 
@@ -81,7 +86,7 @@ void loop() {
 
 void drawTracks() {
   for(int track = 0; track < EDIT_TRACKS; ++track) {
-    if(track != active || action == EditAction::NoAction) display.drawPlayView(track, tracks.getPosition(track), tracks.getPattern(track));
+    if(track != active || action == EditAction::NoAction) display.drawPlayView(track, tracks.getPosition(track), tracks.getPattern(track), clocked);
   }
 }
 
@@ -92,7 +97,14 @@ void handleReset(Signal signal) {
 
 void handleClock(Signal signal) {
   if (signal == Signal::Rising) tracks.stepOn();
-  if (signal == Signal::Rising || signal == Signal::High) display.indicateClock();
+  if (signal == Signal::Low && (now - lastClock) > CLOCK_WAIT) {
+    clocked = false;
+    lastClock = 0;
+  } else if (signal == Signal::Rising || signal == Signal::High) {
+    clocked = true;
+    lastClock = now;
+    display.indicateClock();
+  }
   for(int track = 0; track < EDIT_TRACKS; ++track) handleStep(signal, track);
   if (offBeatOut) handleStep(signal, OFF_BEAT);
   else outs[OFF_BEAT].signal(signal, OutMode::Clock, 1);
@@ -105,7 +117,7 @@ void handleStep(Signal signal, int track) {
 }
 
 void handleEncoderEvent(EncoderEvent event) {
-  if (event.control != Control::NoControl) lastEdit = millis();
+  if (event.control != Control::NoControl) lastEdit = now;
   switch(event.control) {
     case Control::One:
       editModes[edit].oneRotate(event.state);
@@ -129,11 +141,11 @@ void handleButtonEvent(ButtonEvent event) {
 void handleButtonClick(Control control) {
   switch(control) {
     case Control::One:
-      lastEdit = millis();
+      lastEdit = now;
       editModes[edit].oneClick();
       break;
   case Control::Two:
-      lastEdit = millis();
+      lastEdit = now;
       editModes[edit].twoClick();
       break;
     case Control::Three:
@@ -285,6 +297,7 @@ void clockMulitplierEdit(int change) {
 void startStopClock() {
   if(clockGenerator.isRunning()) clockGenerator.stop();
   else clockGenerator.start();
+  clocked = clockGenerator.isRunning();
 }
 
 void switchOffBeatOut() {

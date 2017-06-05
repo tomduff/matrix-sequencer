@@ -88,31 +88,27 @@ void Display::updateTrackIndicator(TrackIndicator& indicator) {
   }
 }
 
-void Display::showCursor(int track) {
-  cursors[track].active = true;
-}
-
-void Display::hideCursor(int track) {
-  cursors[track].active = false;
+void Display::showCursor(int track, bool visible) {
+  cursors[track].active = visible;
 }
 
 void Display::drawProgrammedView(int track, int pattern) {
-  showCursor(track);
+  showCursor(track, true);
   setRows(row(track), pattern);
 }
 
 void Display::drawEuclideanView(int track, int pattern) {
-  hideCursor(track);
+  showCursor(track, false);
   setRows(row(track), pattern);
 }
 
 void Display::drawOffsetView(int track, int pattern) {
-  hideCursor(track);
+  showCursor(track, false);
   setRows(row(track), pattern);
 }
 
-void Display::drawPlayView(int track, int position, int pattern) {
-  showCursor(track);
+void Display::drawPlayView(int track, int position, int pattern, bool cursor) {
+  showCursor(track, cursor);
   setRows(row(track), pattern);
   setTrackCursor(track, position);
   // int state = 0;
@@ -128,7 +124,7 @@ void Display::drawPlayView(int track, int position, int pattern) {
 
 void Display::drawLengthView(int track, int start, int end, bool active) {
   setTrackCursor(track, active ? end : start);
-  showCursor(track);
+  showCursor(track, true);
   int state = 0;
   setRange(state, start, end, LED_ON);
   setRows(row(track), state);
@@ -139,7 +135,7 @@ void Display::drawLengthView(int track, int length) {
 }
 
 void Display::drawPlayModeView(int track, PlayMode mode) {
-  hideCursor(track);
+  showCursor(track, false);
   switch(mode) {
     case PlayMode::Forward:
       setRow(row(track), B00000111);
@@ -159,7 +155,7 @@ void Display::drawPlayModeView(int track, PlayMode mode) {
 }
 
 void Display::drawOutModeView(int track, OutMode mode) {
-  hideCursor(track);
+  showCursor(track, false);
   switch(mode) {
     case OutMode::Trigger:
       setRow(row(track), B00000010);
@@ -177,7 +173,7 @@ void Display::drawOutModeView(int track, OutMode mode) {
 }
 
 void Display::drawPatternTypeView(int track, PatternType mode) {
-  hideCursor(track);
+  showCursor(track, false);
   switch(mode) {
     case PatternType::Programmed:
       setRow(row(track), ALL_ON);
@@ -191,7 +187,7 @@ void Display::drawPatternTypeView(int track, PatternType mode) {
 }
 
 void Display::drawDividerView(int track, int divider, DividerType type) {
-  hideCursor(track);
+  showCursor(track, false);
   byte state = 0;
   bitSet(state, divider);
   setRow(row(track), state);

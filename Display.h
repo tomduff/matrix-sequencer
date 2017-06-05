@@ -42,7 +42,7 @@ public:
   void drawLengthView(int track, int start, int end, bool active);
   void drawPlayModeView(int track, PlayMode mode);
   void drawOutModeView(int track, OutMode mode);
-  void drawPlayView(int track, int position, int pattern);
+  void drawPlayView(int track, int position, int pattern, bool cursor);
   void drawDividerView(int track, int divider, DividerType type);
   void drawPatternTypeView(int track, PatternType mode);
   void setTrackCursor(int track, int position);
@@ -52,8 +52,7 @@ public:
   void indicateActiveTrack(int track);
   void indicateMode(int mode);
 private:
-  void showCursor(int track);
-  void hideCursor(int track);
+  void showCursor(int track, bool visible);
   void clear(DisplayRow rows[]);
   void showIndicator(Indicator& indicator);
   void updateIndicators();
