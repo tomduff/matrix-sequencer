@@ -112,14 +112,16 @@ void handleClock(Signal signal) {
     lastClock = now;
     display.indicateClock();
   }
-  for(int track = 0; track < EDIT_TRACKS; ++track) handleStep(signal, track);
-  if (offBeatOut) handleStep(signal, OFF_BEAT);
+  for(int track = 0; track < EDIT_TRACKS; ++track) handleStep(track);
+  if (offBeatOut) handleStep(OFF_BEAT);
   else outs[OFF_BEAT].signal(signal, OutMode::Clock, 1);
 }
 
-void handleStep(Signal signal, int track) {
+void handleStep(int track) {
   int step = tracks.getStep(track);
-  int output = outs[track].signal(shuffle.tick(track, tracks.getShuffle(track)), tracks.getOutMode(track), step);
+  Signal signal = shuffle.tick(track, tracks.getShuffle(track));
+  if(!tracks.getStepped(track) && Signal::Rising) signal = Signal::Low;
+  int output = outs[track].signal(signal, tracks.getOutMode(track), step);
   if (output) display.indicateTrack(track);
 }
 

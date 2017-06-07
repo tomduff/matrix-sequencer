@@ -31,7 +31,7 @@ int Output::signal(Signal signal, OutMode mode, int step) {
 int Output::handleTrigger(Signal signal) {
 	int out = LOW;
 	unsigned long now = millis();
-	if(signal == Signal::Rising) {
+	if (signal == Signal::Rising) {
 		out = HIGH;
 		triggerStart = now;
 	} else if (signal == Signal::High && (triggerStart != 0) && (now - triggerStart < TRIGGER_PULSE)) {

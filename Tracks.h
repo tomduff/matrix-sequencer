@@ -47,6 +47,7 @@ struct TrackState {
   int length;
   int position;
   bool forward;
+  bool stepped;
   int beat;
   int division;
 };
@@ -79,6 +80,7 @@ public:
   int getPosition(int position);
   int getDivider(int track);
   int getStep(int track);
+  int getStepped(int track);
   PatternType getPatternType(int track);
   DividerType getDividerType(int track);
   PlayMode getPlayMode(int track);

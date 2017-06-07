@@ -165,6 +165,10 @@ int Tracks::getShuffle(int track) {
   return track < TRACKS ? tracks[track].shuffle: getShuffle(0);
 }
 
+int Tracks::getStepped(int track) {
+  return track < TRACKS ? state[track].stepped: getStepped(0);
+}
+
 void Tracks::stepOn() {
   for(int track = 0; track < TRACKS; ++track) stepOn(track);
 }
@@ -178,6 +182,9 @@ void Tracks::stepOn(int track) {
   if (state[track].beat >= state[track].division) {
     state[track].beat = 0;
     stepPosition(track);
+    state[track].stepped = true;
+  } else {
+    state[track].stepped = false;
   }
 }
 
@@ -236,6 +243,7 @@ void Tracks::initialiseState(int track) {
   state[track].position = 0;
   state[track].beat = 0;
   state[track].forward = true;
+  state[track].stepped = false;
   resetLength(track);
   resetDivision(track);
   resetPattern(track);
