@@ -35,6 +35,7 @@ struct Track {
   int density;
   int offset;
   int divider;
+  int shuffle;
   PlayMode play;
   OutMode out;
   PatternType patternType;
@@ -70,6 +71,7 @@ public:
   void setDivider(int track, int offset);
   void nextPatternType(int track);
   void nextDividerType(int track);
+  void setShuffle(int track, int offset);
   int getStart(int track);
   int getEnd(int track);
   int getLength(int track);
@@ -81,6 +83,7 @@ public:
   DividerType getDividerType(int track);
   PlayMode getPlayMode(int track);
   OutMode getOutMode(int track);
+  int getShuffle(int track);
   void stepOn();
   void save();
   void reset();

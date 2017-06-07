@@ -134,6 +134,10 @@ void Display::drawLengthView(int track, int length) {
   drawLengthView(track, 0, length, true);
 }
 
+void Display::drawShuffleView(int track, int length) {
+  drawLengthView(track, 0, length, true);
+}
+
 void Display::drawPlayModeView(int track, PlayMode mode) {
   showCursor(track, false);
   switch(mode) {

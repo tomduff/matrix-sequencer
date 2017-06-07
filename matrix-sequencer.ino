@@ -7,10 +7,11 @@
 #include "Tracks.h"
 #include "Utilities.h"
 #include "ClockGenerator.h"
+#include "Shuffle.h"
 
 #define EDIT_WAIT 7500
 #define CLOCK_WAIT 5000
-#define EDIT_MODES 3
+#define EDIT_MODES 4
 #define EDIT_TRACKS 3
 #define OFF_BEAT 3
 
@@ -22,7 +23,8 @@ enum EditAction {
   EditPlayMode,
   EditOutMode,
   EditDivider,
-  EditPatternType
+  EditPatternType,
+  EditShuffle
 };
 
 struct EditMode {
@@ -42,6 +44,7 @@ Output outs[4] = {Output(11), Output(12), Output(13), Output(17)};
 Tracks tracks = Tracks();
 EditMode editModes[EDIT_MODES];
 ClockGenerator clockGenerator = ClockGenerator();
+Shuffle shuffle = Shuffle();
 int edit = 0;
 int cursor = 0;
 int active = 0;
@@ -91,11 +94,15 @@ void drawTracks() {
 }
 
 void handleReset(Signal signal) {
-  if (signal == Signal::Rising) tracks.reset();
+  if (signal == Signal::Rising) {
+    shuffle.reset();
+    tracks.reset();
+  }
   if (signal == Signal::Rising || signal == Signal::High) display.indicateReset();
 }
 
 void handleClock(Signal signal) {
+  shuffle.clock(signal);
   if (signal == Signal::Rising) tracks.stepOn();
   if (signal == Signal::Low && (now - lastClock) > CLOCK_WAIT) {
     clocked = false;
@@ -112,7 +119,7 @@ void handleClock(Signal signal) {
 
 void handleStep(Signal signal, int track) {
   int step = tracks.getStep(track);
-  int output = outs[track].signal(signal, tracks.getOutMode(track), step);
+  int output = outs[track].signal(shuffle.tick(track, tracks.getShuffle(track)), tracks.getOutMode(track), step);
   if (output) display.indicateTrack(track);
 }
 
@@ -282,6 +289,12 @@ void switchPatternType() {
   display.drawPatternTypeView(active, tracks.getPatternType(active));
 }
 
+void shuffleEdit(int change) {
+  if (action != EditAction::EditShuffle) setEditAction(EditAction::EditShuffle);
+  else tracks.setShuffle(active, change);
+  display.drawShuffleView(active, tracks.getShuffle(active));
+}
+
 void clockSpeedEdit(int change) {
   clockGenerator.setSpeed(change);
 }
@@ -307,7 +320,8 @@ void switchOffBeatOut() {
 void initialiseEditModes() {
   editModes[0] = EditMode{lengthEdit, switchLengthMarker, movePatternCursor, patternEdit, offsetEdit};
   editModes[1] = EditMode{dividerEdit, switchDividerType, playModeEdit, switchPatternType, outModeEdit};
-  editModes[2] = EditMode{clockSpeedEdit, startStopClock, clockWidthEdit, switchOffBeatOut, clockMulitplierEdit};
+  editModes[2] = EditMode{shuffleEdit, noActionButton, noActionEncoder, noActionButton, noActionEncoder};
+  editModes[3] = EditMode{clockSpeedEdit, startStopClock, clockWidthEdit, switchOffBeatOut, clockMulitplierEdit};
   edit = 0;
 }
 

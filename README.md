@@ -2,6 +2,16 @@
 
 Implementation of a 3 track programmable or Euclidean pattern sequencer using the [SYINSI Euclidean Sequencer hardware](http://syinsi.com/shop/modules/euclidean-built/) and inspired by Tom Whitwell's Euclidean Sequencer as described [on MuffWiggler](https://www.muffwiggler.com/forum/viewtopic.php?t=45485&start=all&postdays=0&postorder=asc)
 
+# Features
++ 3 tracks plus optional inverted track 1 out
++ Programmable 1-16 step sequences or Euclidean sequence per track
++ Forward, Backward, Pendulum or Random play per track
++ Shuffle amount per track
++ Clock divider per track
++ Selectable Trigger, Clock width or Gate out per track
++ Internal Clock - base speed, multiplier and width, optionally
++ Optionally send clock (internal or external) to inverted out
+
 ## Controls
 ### Edit Mode 1 - Pattern Definition Settings
 + 1/Length
@@ -33,7 +43,22 @@ Implementation of a 3 track programmable or Euclidean pattern sequencer using th
   + Hold (~2s) - Make Track 3 the active editing track
 
 
-### Edit Mode 3 - Clock settings
+### Edit Mode 3 - Shuffle settings
++ 1/Length
+  + Rotate - Change the shuffle amount (0-15) - works on both internal and external clock
+  + Click -  Nothing
+  + Hold (~2s) - Make Track 1 the active editing track
++ 2/Density
+  + Rotate - Nothing
+  + Click - Nothing
+  + Hold (~2s) - Make Track 2 the active editing track
++ 3/Offset
+  + Rotate - Nothing
+  + Click - Change Edit Modes **indicated by 7th row of leds**
+  + Hold (~2s) - Make Track 3 the active editing track
+
+
+### Edit Mode 4 - Clock settings
 _Note - these settings are not currently persisted, nor are any useful indicators displayed when editing_
 + 1/Length
   + Rotate - Change the internal clock speed (~60bpm to 240bpm) changes by 1 bpm at a time so quite slow)

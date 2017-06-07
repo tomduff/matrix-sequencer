@@ -4,7 +4,7 @@
 #define TRIGGER_PULSE 20
 
 Output::Output(int io)
- : pin(io), mode(OutMode::Trigger), triggerStart(0) {
+ : pin(io), triggerStart(0) {
 }
 
 void Output::initialise() {

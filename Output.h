@@ -12,7 +12,6 @@ public:
   int signal(Signal signal, OutMode mode, int step);
 private:
   int pin;
-  OutMode mode;
   unsigned long triggerStart;
   int handleTrigger(Signal signal);
 };

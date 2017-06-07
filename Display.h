@@ -39,6 +39,7 @@ public:
   void drawEuclideanView(int track, int pattern);
   void drawOffsetView(int track, int pattern);
   void drawLengthView(int track, int length);
+  void drawShuffleView(int track, int length);
   void drawLengthView(int track, int start, int end, bool active);
   void drawPlayModeView(int track, PlayMode mode);
   void drawOutModeView(int track, OutMode mode);

@@ -3,10 +3,11 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 
-#define CONFIG_VERSION 107
+#define CONFIG_VERSION 108
 #define CONFIG_ADDRESS 0
 #define MAX_STEP_INDEX 15
 #define MAX_DIVIDER 7
+#define MAX_SHUFFLE MAX_STEP_INDEX
 #define TRACKS 3
 
 Tracks::Tracks() {
@@ -110,6 +111,12 @@ void Tracks::nextDividerType(int track) {
   change = true;
 }
 
+void Tracks::setShuffle(int track, int offset) {
+  tracks[track].shuffle += offset;
+  Utilities::bound(tracks[track].shuffle, 0, MAX_SHUFFLE);
+  change = true;
+}
+
 int Tracks::getStart(int track) {
   return track < TRACKS ? tracks[track].start : getStart(0);
 }
@@ -152,6 +159,10 @@ PlayMode Tracks::getPlayMode(int track) {
 
 OutMode Tracks::getOutMode(int track) {
   return track < TRACKS ? tracks[track].out: getOutMode(0);
+}
+
+int Tracks::getShuffle(int track) {
+  return track < TRACKS ? tracks[track].shuffle: getShuffle(0);
 }
 
 void Tracks::stepOn() {
@@ -213,9 +224,10 @@ void Tracks::initialiseTrack(int track) {
   tracks[track].length = MAX_STEP_INDEX;
   tracks[track].density = 0;
   tracks[track].offset = 0;
+  tracks[track].divider = 0;
+  tracks[track].shuffle = 0;
   tracks[track].play = PlayMode::Forward;
   tracks[track].out = OutMode::Trigger;
-  tracks[track].divider = 0;
   tracks[track].patternType = PatternType::Programmed;
   tracks[track].dividerType = DividerType::Beat;
 }
