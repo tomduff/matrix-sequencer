@@ -8,6 +8,7 @@ Implementation of a 3 track programmable or Euclidean pattern sequencer using th
 + Forward, Backward, Pendulum or Random play per track
 + Shuffle amount per track
 + Clock divider per track
++ Random mutation patterns based either the original pattern, the last mutation or and inverse of the last mutation
 + Selectable Trigger, Clock width or Gate out per track
 + Internal Clock - base speed, multiplier and width, optionally
 + Optionally send clock (internal or external) to inverted out
@@ -43,14 +44,14 @@ Implementation of a 3 track programmable or Euclidean pattern sequencer using th
   + Hold (~2s) - Make Track 3 the active editing track
 
 
-### Edit Mode 3 - Shuffle settings
+### Edit Mode 3 - Shuffle & Mutation settings
 + 1/Length
   + Rotate - Change the shuffle amount (0-15) - works on both internal and external clock
   + Click -  Nothing
   + Hold (~2s) - Make Track 1 the active editing track
 + 2/Density
-  + Rotate - Nothing
-  + Click - Nothing
+  + Rotate - Select Mutation amount  - the high the number the more likely steps will be flipped at the end of a loop (0 to 50% chance a step will be inverted)
+  + Click - Choose Mutation Seed for next cycle : Original pattern, Current mutated pattern, Current mutated pattern inverted (with mutation set at 0 this just inverts the pattern on each loop)
   + Hold (~2s) - Make Track 2 the active editing track
 + 3/Offset
   + Rotate - Nothing

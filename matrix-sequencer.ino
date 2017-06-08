@@ -24,7 +24,8 @@ enum EditAction {
   EditOutMode,
   EditDivider,
   EditPatternType,
-  EditShuffle
+  EditShuffle,
+  EditMutation
 };
 
 struct EditMode {
@@ -279,6 +280,12 @@ void dividerEdit(int change) {
   display.drawDividerView(active, tracks.getDivider(active), tracks.getDividerType(active));
 }
 
+void mutationEdit(int change) {
+  if (action != EditAction::EditMutation) setEditAction(EditAction::EditMutation);
+  else tracks.setMutation(active, change);
+  display.drawMutationView(active, tracks.getMutation(active), tracks.getMutationSeed(active));
+}
+
 void switchDividerType() {
   if (action != EditAction::EditDivider) setEditAction(EditAction::EditDivider);
   else tracks.nextDividerType(active);
@@ -289,6 +296,12 @@ void switchPatternType() {
   if (action != EditAction::EditPatternType) setEditAction(EditAction::EditPatternType);
   else tracks.nextPatternType(active);
   display.drawPatternTypeView(active, tracks.getPatternType(active));
+}
+
+void switchMutationSeed() {
+  if (action != EditAction::EditMutation) setEditAction(EditAction::EditMutation);
+  else tracks.nextMutationSeed(active);
+  display.drawMutationView(active, tracks.getMutation(active), tracks.getMutationSeed(active));
 }
 
 void shuffleEdit(int change) {
@@ -322,7 +335,7 @@ void switchOffBeatOut() {
 void initialiseEditModes() {
   editModes[0] = EditMode{lengthEdit, switchLengthMarker, movePatternCursor, patternEdit, offsetEdit};
   editModes[1] = EditMode{dividerEdit, switchDividerType, playModeEdit, switchPatternType, outModeEdit};
-  editModes[2] = EditMode{shuffleEdit, noActionButton, noActionEncoder, noActionButton, noActionEncoder};
+  editModes[2] = EditMode{shuffleEdit, noActionButton, mutationEdit, switchMutationSeed, noActionEncoder};
   editModes[3] = EditMode{clockSpeedEdit, startStopClock, clockWidthEdit, switchOffBeatOut, clockMulitplierEdit};
   edit = 0;
 }

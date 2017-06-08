@@ -205,6 +205,24 @@ void Display::drawDividerView(int track, int divider, DividerType type) {
   }
 }
 
+void Display::drawMutationView(int track, int mutation, MutationSeed seed) {
+  showCursor(track, false);
+  byte state = 0;
+  bitSet(state, mutation);
+  setRow(row(track), state);
+  switch(seed) {
+    case Original:
+      setRow(row(track) + 1, B00000001);
+      break;
+    case Last:
+      setRow(row(track) + 1, B10000000);
+      break;
+    case LastInverted:
+      setRow(row(track) + 1, B01111111);
+      break;
+  }
+}
+
 void Display::setRows(int row, int state) {
   setRow(row, lowByte(state));
   setRow(row + 1, highByte(state));

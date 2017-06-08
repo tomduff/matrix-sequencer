@@ -27,6 +27,12 @@ enum DividerType {
   Triplet
 };
 
+enum MutationSeed {
+  Original,
+  Last,
+  LastInverted
+};
+
 struct Track {
   int pattern;
   int start;
@@ -36,10 +42,12 @@ struct Track {
   int offset;
   int divider;
   int shuffle;
+  int mutation;
   PlayMode play;
   OutMode out;
   PatternType patternType;
   DividerType dividerType;
+  MutationSeed mutationSeed;
 };
 
 struct TrackState {
@@ -73,6 +81,8 @@ public:
   void nextPatternType(int track);
   void nextDividerType(int track);
   void setShuffle(int track, int offset);
+  void setMutation(int track, int offset);
+  void nextMutationSeed(int track);
   int getStart(int track);
   int getEnd(int track);
   int getLength(int track);
@@ -81,10 +91,12 @@ public:
   int getDivider(int track);
   int getStep(int track);
   int getStepped(int track);
+  int getMutation(int track);
   PatternType getPatternType(int track);
   DividerType getDividerType(int track);
   PlayMode getPlayMode(int track);
   OutMode getOutMode(int track);
+  MutationSeed getMutationSeed(int track);
   int getShuffle(int track);
   void stepOn();
   void save();
@@ -95,6 +107,7 @@ private:
   TrackState state[3];
   void stepOn(int track);
   void stepPosition(int track);
+  void mutate(int track);
   void load();
   void initialiseTrack(int track);
   void initialiseState(int track);

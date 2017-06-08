@@ -46,6 +46,7 @@ public:
   void drawPlayView(int track, int position, int pattern, bool cursor);
   void drawDividerView(int track, int divider, DividerType type);
   void drawPatternTypeView(int track, PatternType mode);
+  void drawMutationView(int track, int mutation, MutationSeed seed);
   void setTrackCursor(int track, int position);
   void indicateReset();
   void indicateClock();

@@ -3,11 +3,13 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 
-#define CONFIG_VERSION 108
+#define CONFIG_VERSION 109
 #define CONFIG_ADDRESS 0
 #define MAX_STEP_INDEX 15
 #define MAX_DIVIDER 7
 #define MAX_SHUFFLE MAX_STEP_INDEX
+#define MAX_MUTATION MAX_DIVIDER
+#define MUTATION_FACTOR 100
 #define TRACKS 3
 
 Tracks::Tracks() {
@@ -117,6 +119,20 @@ void Tracks::setShuffle(int track, int offset) {
   change = true;
 }
 
+void Tracks::setMutation(int track, int offset) {
+  tracks[track].mutation += offset;
+  Utilities::bound(tracks[track].mutation, 0, MAX_MUTATION);
+  change = true;
+}
+
+void Tracks::nextMutationSeed(int track) {
+  int mode = (int)tracks[track].mutationSeed;
+  ++mode;
+  Utilities::cycle(mode, MutationSeed::Original, MutationSeed::LastInverted);
+  tracks[track].mutationSeed = (MutationSeed) mode;
+  change = true;
+}
+
 int Tracks::getStart(int track) {
   return track < TRACKS ? tracks[track].start : getStart(0);
 }
@@ -169,6 +185,15 @@ int Tracks::getStepped(int track) {
   return track < TRACKS ? state[track].stepped: getStepped(0);
 }
 
+int Tracks::getMutation(int track) {
+  return track < TRACKS ? tracks[track].mutation: getMutation(0);
+}
+
+
+MutationSeed Tracks::getMutationSeed(int track){
+  return track < TRACKS ? tracks[track].mutationSeed: getMutationSeed(0);
+}
+
 void Tracks::stepOn() {
   for(int track = 0; track < TRACKS; ++track) stepOn(track);
 }
@@ -206,6 +231,29 @@ void Tracks::stepPosition(int track) {
       else --state[track].position;
       if (Utilities::reverse(state[track].position, 0, state[track].length)) state[track].forward  = !state[track].forward ;
     break;
+  }
+  if(state[track].position == 0) mutate(track);
+}
+
+void Tracks::mutate(int track) {
+  int seed;
+  switch(tracks[track].mutationSeed) {
+    case MutationSeed::Original:
+      seed = tracks[track].pattern;
+      break;
+    case MutationSeed::Last:
+      seed = state[track].pattern;
+      break;
+    case MutationSeed::LastInverted:
+      seed = state[track].pattern;
+      seed = ~seed;
+      break;
+  }
+
+  for (int index = 0; index <= MAX_STEP_INDEX; ++index) {
+    bool step = bitRead(seed, index);
+    if (random(1, MUTATION_FACTOR) <= pow(tracks[track].mutation,2)) step = !step;
+    bitWrite(state[track].pattern, index, step);
   }
 }
 
