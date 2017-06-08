@@ -1,6 +1,6 @@
 # matrix-sequencer
 
-Implementation of a 3 track programmable or Euclidean pattern sequencer using the [SYINSI Euclidean Sequencer hardware](http://syinsi.com/shop/modules/euclidean-built/) and inspired by Tom Whitwell's Euclidean Sequencer as described [on MuffWiggler](https://www.muffwiggler.com/forum/viewtopic.php?t=45485&start=all&postdays=0&postorder=asc)
+Implementation of a 3 track programmable or Euclidean pattern sequencer using the [SYINSI Euclidean Sequencer hardware](http://syinsi.com/shop/modules/euclidean-built/) and inspired by Tom Whitwell's Euclidean Sequencer as described [on MuffWiggler](https://www.muffwiggler.com/forum/viewtopic.php?t=45485&start=all&postdays=0&postorder=asc).
 
 # Features
 + 3 tracks plus optional inverted track 1 out
@@ -8,7 +8,7 @@ Implementation of a 3 track programmable or Euclidean pattern sequencer using th
 + Forward, Backward, Pendulum or Random play per track
 + Shuffle amount per track
 + Clock divider per track
-+ Random mutation patterns based either the original pattern, the last mutation or and inverse of the last mutation
++ Randomly mutate patterns on each loop, select either the original pattern, the last mutation or and inverse of the last mutation as the base for the next mutation
 + Selectable Trigger, Clock width or Gate out per track
 + Internal Clock - base speed, multiplier and width, optionally
 + Optionally send clock (internal or external) to inverted out
