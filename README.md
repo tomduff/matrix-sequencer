@@ -8,7 +8,7 @@ Implementation of a 3 track programmable or Euclidean pattern sequencer using th
 + Forward, Backward, Pendulum or Random play per track
 + Shuffle amount per track
 + Clock divider per track
-+ Randomly mutate patterns on each loop, select either the original pattern, the last mutation or and inverse of the last mutation as the base for the next mutation
++ Randomly mutate patterns on each loop using either the original pattern, the last mutation or the inverse of the last mutation as the base for the next mutation
 + Selectable Trigger, Clock width or Gate out per track
 + Internal Clock - base speed, multiplier and width, optionally
 + Optionally send clock (internal or external) to inverted out
@@ -50,8 +50,8 @@ Implementation of a 3 track programmable or Euclidean pattern sequencer using th
   + Click -  Nothing
   + Hold (~2s) - Make Track 1 the active editing track
 + 2/Density
-  + Rotate - Select Mutation amount  - the high the number the more likely steps will be flipped at the end of a loop (0 to 50% chance a step will be inverted)
-  + Click - Choose Mutation Seed for next cycle : Original pattern, Current mutated pattern, Current mutated pattern inverted (with mutation set at 0 this just inverts the pattern on each loop)
+  + Rotate - Select Mutation factor  - the higher the probability (0 to 50%) the more likely steps will be flipped at the end of a loop
+  + Click - Choose Mutation Seed for next cycle : Original pattern, Current mutated pattern, Current mutated pattern inverted (if mutation = 0 this inverts the pattern on each loop)
   + Hold (~2s) - Make Track 2 the active editing track
 + 3/Offset
   + Rotate - Nothing
@@ -85,7 +85,7 @@ _Note - these settings are not currently persisted, nor are any useful indicator
 + display reverts to a play view after ~5 seconds of not twiddling knobs
 + Saving of changes (if there are any) occurs when you switch edit mode or when the display reverts to the play view
 + sync resets on the rising edge
-+ you will probably should expect to loose your saved tracks each time you update while everything is in flux
++ you should probably expect to loose your saved tracks each time you update while everything is in flux
 
 ## The Future
 + Improve the UX!

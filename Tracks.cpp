@@ -250,7 +250,7 @@ void Tracks::mutate(int track) {
       break;
   }
 
-  for (int index = 0; index <= MAX_STEP_INDEX; ++index) {
+  for (int index = 0; index <= state[track].length; ++index) {
     bool step = bitRead(seed, index);
     if (random(1, MUTATION_FACTOR) <= pow(tracks[track].mutation,2)) step = !step;
     bitWrite(state[track].pattern, index, step);
