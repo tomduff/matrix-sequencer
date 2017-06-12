@@ -14,7 +14,7 @@ Implementation of a 3 track programmable or Euclidean pattern sequencer using th
 + Optionally send clock (internal or external) to inverted out
 
 ## Controls
-### Edit Mode 1 - Pattern Definition Settings
+### Edit Mode 1 - (p) Pattern Definition Settings
 + 1/Length
   + Rotate - Change length start or end length marker to define loop points
   + Click - **Programmed Mode :** Switch between start and end markers  **Euclidean mode:** only the end marker can be moved to define a length
@@ -29,7 +29,7 @@ Implementation of a 3 track programmable or Euclidean pattern sequencer using th
   + Hold (~2s) - Make Track 3 the active editing track
 
 
-### Edit Mode 2 - Pattern Configuration
+### Edit Mode 2 - (t) Track Configuration Settings
 + 1/Length
   + Rotate - Set the divider value **Beat Mode :** 1,2,4,8,16,32,64 **Triplet Mode :** 3,6,9,12,15,18,21,24
   + Click -  Switch between divider modes : Beat and Triplet
@@ -44,7 +44,7 @@ Implementation of a 3 track programmable or Euclidean pattern sequencer using th
   + Hold (~2s) - Make Track 3 the active editing track
 
 
-### Edit Mode 3 - Shuffle & Mutation settings
+### Edit Mode 3 - (m) Pattern Modifiers (Shuffle & Mutation) settings
 + 1/Length
   + Rotate - Change the shuffle amount (0-15) - works on both internal and external clock
   + Click -  Nothing
@@ -59,7 +59,7 @@ Implementation of a 3 track programmable or Euclidean pattern sequencer using th
   + Hold (~2s) - Make Track 3 the active editing track
 
 
-### Edit Mode 4 - Clock settings
+### Edit Mode 4 - (c) Clock settings
 _Note - these settings are not currently persisted, nor are any useful indicators displayed when editing_
 + 1/Length
   + Rotate - Change the internal clock speed (~60bpm to 240bpm) changes by 1 bpm at a time so quite slow)

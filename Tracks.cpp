@@ -6,9 +6,10 @@
 #define CONFIG_VERSION 109
 #define CONFIG_ADDRESS 0
 #define MAX_STEP_INDEX 15
-#define MAX_DIVIDER 7
+#define MAX_BEAT_DIVIDER 6
+#define MAX_TRIPLET_DIVIDER 7
 #define MAX_SHUFFLE MAX_STEP_INDEX
-#define MAX_MUTATION MAX_DIVIDER
+#define MAX_MUTATION MAX_STEP_INDEX
 #define MUTATION_FACTOR 100
 #define TRACKS 3
 
@@ -99,7 +100,7 @@ void Tracks::setOutMode(int track, int offset) {
 
 void Tracks::setDivider(int track, int offset) {
   tracks[track].divider += offset;
-  Utilities::bound(tracks[track].divider, 0, MAX_DIVIDER);
+  Utilities::bound(tracks[track].divider, 0, tracks[track].dividerType == DividerType::Beat ? MAX_BEAT_DIVIDER : MAX_TRIPLET_DIVIDER);
   resetDivision(track);
   change = true;
 }
@@ -335,8 +336,9 @@ void Tracks::resetEuclidean(int track) {
 }
 
 void Tracks::resetDivision(int track) {
-    state[track].division = calculateDivision(tracks[track].divider, tracks[track].dividerType);
-    state[track].beat = 0;
+  Utilities::bound(tracks[track].divider, 0, tracks[track].dividerType == DividerType::Beat ? MAX_BEAT_DIVIDER : MAX_TRIPLET_DIVIDER);
+  state[track].division = calculateDivision(tracks[track].divider, tracks[track].dividerType);
+  state[track].beat = 0;
 }
 
 int Tracks::calculateDivision(int divider, DividerType type) {
