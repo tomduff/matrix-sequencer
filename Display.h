@@ -7,76 +7,44 @@
 #include <LedControl.h>
 #include <stdint.h>
 
-enum Frames {
-  PatternModeFrame,
-  TrackModeFrame,
-  ModifiersModeFrame,
-  ClockModeFrame,
-  ResetModeFrame,
-  SystemModeFrame,
-  ProgrammedFrame,
-  EuclideanFrame,
-  OriginalFrame,
-  MutatedFrame,
-  InverseMutatedFrame,
-  TriggerFrame,
-  ClockFrame,
-  GateFrame,
-  ForwardsFrame,
-  BackwardsFrame,
-  PendulumFrame,
-  RandomFrame,
-  BeatFrame,
-  TripletFrame,
-  SmileFrame,
-  InverseSmileFrame,
-  DividerOneFrame,
-  DividerTwoFrame,
-  DividerFourFrame,
-  DividerEightFrame,
-  DividerSixteenFrame,
-  DividerThirtyTwoFrame,
-  DividerSixtyFourFrame,
-  DividerThreeFrame,
-  DividerSixFrame,
-  DividerNineFrame,
-  DividerTwelveFrame,
-  DividerFifteenFrame,
-  DividerEighteenFrame,
-  DividerTwentyOneFrame,
-  DividerTwentyFour
+const uint64_t MODES[] PROGMEM = {
+  0x0001001818181800,   // I Pattern Mode
+  0x0002006666666600,   // II Track Mode
+  0x000400dbdbdbdb00,   // III Modifiers Mode
+  0x00080073fbdbdb00,   // IV Clock Mode
+  0x001000187e666600,   // V Reset Mode
+  0x002000cedfdbdb00    // VI System Mode
 };
 
-const uint64_t FRAMES[] PROGMEM = {
-  0x0f063e66663b0000,   // p Pattern Mode
-  0x00182c0c0c3e0c08,   // t Track Mode
-  0x003c66603860663c,   // m Modifiers Mode
-  0x001e3303331e0000,   // c Clock Mode
-  0x000f06666e3b0000,   // r Reset Mode
-  0x001f301e033e0000,   // s System Mode
-  0x0006063e6666663e,   // P (Programmed)
-  0x007e06063e06067e,   // E (Euclidean)
-  0x003c66666666663c,   // O (Original)
-  0x00c6c6c6d6feeec6,   // M (Mutated)
-  0x003c18181818183c,   // I (Inverted Mutated)
-  0x00ff020202020202,   // Trigger
-  0x00db4a4a4a4a4a6e,   // Clock Variable
-  0x00c342424242427e,   // Gate
+const uint64_t PLAY_MODES[] PROGMEM = {
   0x0010307fff7f3010,   // Forward
   0x00080cfefffe0c08,   // Backwards
   0x0081c3e7ffe7c381,   // Forwards Backwards
-  0x0066361e3e66663e,   // R (Random)
+  0x0066361e3e66663e   // R (Random)
+};
+
+const uint64_t OUT_MODES[] PROGMEM = {
+  0x00ff020202020202,   // Trigger
+  0x00db4a4a4a4a4a6e,   // Clock Variable
+  0x00c342424242427e   // Gate
+};
+
+const uint64_t DIVIDER_TYPES[] PROGMEM = {
   0x00060e0c08683818,   // Beat
-  0x031bdad292929ce0,   // Triplet
-  0x003c420024242400,   // Simle
-  0xffc3bdffdbdbdbff,   // Inverse Smile
+  0x031bdad292929ce0    // Triplet
+};
+
+const uint64_t BEAT_DIVIDERS[] PROGMEM {
   0x0000000008000000,   // Divider 1
   0x0000000018000000,   // Divider 2
   0x0000001818000000,   // Divider 4
   0x0000181818180000,   // Divider 8
   0x00003c3c3c3c0000,   // Divider 16
   0x3c3c3c3c3c3c3c3c,   // Divider 32
-  0xffffffffffffffff,   // Divider 64
+  0xffffffffffffffff    // Divider 64
+};
+
+const uint64_t TRIPLET_DIVIDERS[] PROGMEM {
   0x000000001c000000,   // Divider 3
   0x0000001c1c000000,   // Divider 6
   0x0000001c1c1c0000,   // Divider 9
@@ -86,6 +54,20 @@ const uint64_t FRAMES[] PROGMEM = {
   0x1c1c1c1c1c1c1c00,   // Divider 21
   0x1c1c1c1c1c1c1c1c    // Divider 24
 };
+
+const uint64_t MUTATION_SEEDS[] PROGMEM = {
+  0x003c66666666663c,   // O (Original)
+  0x00c6c6c6d6feeec6,   // M (Mutated)
+  0x003c18181818183c   // I (Inverted Mutated)
+};
+
+const uint64_t PATTERN_MODES[] PROGMEM = {
+  0x0006063e6666663e,   // P (Programmed)
+  0x007e06063e06067e   // E (Euclidean)
+};
+
+const uint64_t SMILE PROGMEM = 0x003c420024242400;
+const uint64_t INVERSE_SMILE PROGMEM = 0xffc3bdffdbdbdbff;
 
 struct DisplayFrame {
   uint64_t image;
@@ -164,8 +146,8 @@ private:
   void setRow(int row, byte state);
   void setRows(int row, int state);
   void setLed(int row, int column, bool state);
-  void drawFrame(int index);
-  void drawFrame(int index, unsigned long time);
+  void showFrame(const uint64_t *image);
+  void showFrame(const uint64_t *image, unsigned long time);
   DisplayRow display[8];
   DisplayRow cursorMask[8];
   DisplayFrame frame;

@@ -48,7 +48,7 @@ Tracks tracks = Tracks();
 EditMode editModes[EDIT_MODES];
 ClockGenerator clockGenerator = ClockGenerator();
 Shuffle shuffle = Shuffle();
-int edit = 0;
+int edit = -1;
 int cursor = 0;
 int active = 0;
 EditAction action = EditAction::NoAction;
@@ -81,8 +81,8 @@ void loop() {
   handleEncoderEvent(encoders.event());
   handleButtonEvent(buttons.event());
 
-  if (action == EditAction::NoAction || lastEdit == 0 || (millis() - lastEdit) > EDIT_WAIT) {
-    clearEditAction();
+  if (lastEdit != 0 && (millis() - lastEdit) > EDIT_WAIT) {
+      clearEditAction();
   }
 
   drawTracks();

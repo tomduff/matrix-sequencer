@@ -6,7 +6,7 @@
 #define UNLIMITED 0
 #define INDICATOR_TIME 25
 #define TRACK_INDICATOR_TIME 300
-#define MODE_FRAME_TIME 200
+#define MODE_FRAME_TIME 500
 #define FLASH_TIME_ON 50
 #define FLASH_TIME_OFF 100
 #define INDICATOR_ROW 7
@@ -170,61 +170,31 @@ void Display::drawShuffleView(int track, int length) {
 void Display::drawPlayModeView(int track, PlayMode mode) {
   timeout();
   showCursor(track, false);
-  switch(mode) {
-    case PlayMode::Forward:
-      drawFrame(Frames::ForwardsFrame);
-      break;
-    case PlayMode::Backward:
-      drawFrame(Frames::BackwardsFrame);
-      break;
-    case PlayMode::Pendulum:
-      drawFrame(Frames::PendulumFrame);
-      break;
-    case PlayMode::Random:
-      drawFrame(Frames::RandomFrame);
-      break;
-  }
-  setRow(row(track) + 1, ALL_OFF);
+  showFrame(&PLAY_MODES[mode]);
 }
 
 void Display::drawOutModeView(int track, OutMode mode) {
   timeout();
   showCursor(track, false);
-  switch(mode) {
-    case OutMode::Trigger:
-      drawFrame(Frames::TriggerFrame);
-      break;
-    case OutMode::Clock:
-      drawFrame(Frames::ClockFrame);
-      break;
-    case OutMode::Gate:
-      drawFrame(Frames::GateFrame);
-    break;
-  }
+  showFrame(&OUT_MODES[mode]);
 }
 
 void Display::drawPatternTypeView(int track, PatternType mode) {
   timeout();
   showCursor(track, false);
-  switch(mode) {
-    case PatternType::Programmed:
-      drawFrame(Frames::ProgrammedFrame);
-      break;
-    case PatternType::Euclidean:
-      drawFrame(Frames::EuclideanFrame);
-    break;
-  }
+  showFrame(&PATTERN_MODES[mode]);
 }
 
 void Display::drawDividerView(int track, int divider, DividerType type) {
   timeout();
   showCursor(track, false);
+  //showFrame(&DIVIDER_TYPES[type]);
   switch(type) {
     case Beat:
-      drawFrame(Frames::DividerOneFrame + divider);
+      showFrame(&BEAT_DIVIDERS[divider]);
       break;
     case Triplet:
-      drawFrame(Frames::DividerThreeFrame + divider);
+      showFrame(&TRIPLET_DIVIDERS[divider]);
       break;
   }
 }
@@ -232,14 +202,7 @@ void Display::drawDividerView(int track, int divider, DividerType type) {
 void Display::drawDividerTypeView(int track, DividerType type) {
   timeout();
   showCursor(track, false);
-  switch(type) {
-    case Beat:
-      drawFrame(Frames::BeatFrame);
-      break;
-    case Triplet:
-      drawFrame(Frames::TripletFrame);
-      break;
-  }
+  showFrame(&DIVIDER_TYPES[type]);
 }
 
 void Display::drawMutationView(int track, int mutation) {
@@ -253,17 +216,7 @@ void Display::drawMutationView(int track, int mutation) {
 void Display::drawMutationSeedView(int track, MutationSeed seed) {
   timeout();
   showCursor(track, false);
-  switch(seed) {
-    case Original:
-      drawFrame(Frames::OriginalFrame);
-      break;
-    case Last:
-      drawFrame(Frames::MutatedFrame);
-      break;
-    case LastInverted:
-      drawFrame(Frames::InverseMutatedFrame);
-      break;
-  }
+  showFrame(&MUTATION_SEEDS[seed]);
 }
 
 void Display::setRows(int row, int state) {
@@ -317,11 +270,22 @@ void Display::showIndicator(Indicator& indicator) {
     indicator.start = millis();
 }
 
+void Display::showFrame(const uint64_t *image) {
+  showFrame(image, UNLIMITED);
+}
+
+void Display::showFrame(const uint64_t *image, unsigned long time) {
+  memcpy_P(&frame.image, image, MATRIX_ROWS);
+  frame.time = time;
+  frame.start = millis();
+  frame.active = true;
+}
+
 void Display::indicateMode(int mode) {
   byte state = 0;
   bitSet(state, mode);
   setRow(MODE_ROW, state);
-  drawFrame(mode, MODE_FRAME_TIME);
+  showFrame(&MODES[mode], MODE_FRAME_TIME);
 }
 
 void Display::setTrackCursor(int track, int position) {
@@ -346,27 +310,16 @@ void Display::setRange(int &value, int start, int end, int bit) {
 
 void Display::simley() {
   for (int repeat = 0; repeat < 3; ++ repeat) {
-    drawFrame(Frames::InverseSmileFrame);
+    showFrame(&INVERSE_SMILE);
     render();
     delay(100);
-    drawFrame(Frames::SmileFrame);
+    showFrame(&SMILE);
     render();
     delay(100);
   }
-  drawFrame(Frames::InverseSmileFrame);
+  showFrame(&INVERSE_SMILE);
   render();
   delay(100);
   clear();
   render();
-}
-
-void Display::drawFrame(int index) {
-  drawFrame(index, UNLIMITED);
-}
-
-void Display::drawFrame(int index, unsigned long time) {
-  memcpy_P(&frame.image, &FRAMES[index], MATRIX_ROWS);
-  frame.time = time;
-  frame.start = millis();
-  frame.active = true;
 }
