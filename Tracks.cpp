@@ -240,7 +240,8 @@ void Tracks::mutate(int track) {
   int seed;
   switch(tracks[track].mutationSeed) {
     case MutationSeed::Original:
-      seed = tracks[track].pattern;
+      resetPattern(track);
+      seed = state[track].pattern;
       break;
     case MutationSeed::Last:
       seed = state[track].pattern;
