@@ -3,8 +3,10 @@
 
 #define row(t) (t * 2)
 
+#define UNLIMITED 0
 #define INDICATOR_TIME 25
-#define TRACK_INDICATOR_TIME 500
+#define TRACK_INDICATOR_TIME 300
+#define MODE_FRAME_TIME 500
 #define FLASH_TIME_ON 50
 #define FLASH_TIME_OFF 100
 #define INDICATOR_ROW 7
@@ -24,11 +26,14 @@
 #define TRACKS 3
 #define CURSORS TRACKS
 
-
 Display::Display()
-  : clock{INDICATOR_ROW, CLOCK_INDICATOR,false,0},
-    reset{INDICATOR_ROW, RESET_INDICATOR,false,0},
-    tracks{{INDICATOR_ROW,TRACK_ONE_INDICATOR,false,0},{INDICATOR_ROW,TRACK_TWO_INDICATOR,false,0},{INDICATOR_ROW,TRACK_THREE_INDICATOR,false,0},{INDICATOR_ROW,OFF_BEAT_INDICATOR,false,0}} {
+  : frame{0, 0, 0, false},
+    clock{INDICATOR_ROW, CLOCK_INDICATOR, false, 0},
+    reset{INDICATOR_ROW, RESET_INDICATOR, false, 0},
+    tracks{{INDICATOR_ROW, TRACK_ONE_INDICATOR, false, 0},
+      {INDICATOR_ROW, TRACK_TWO_INDICATOR, false, 0},
+      {INDICATOR_ROW, TRACK_THREE_INDICATOR, false, 0},
+      {INDICATOR_ROW, OFF_BEAT_INDICATOR, false, 0}} {
 }
 
 void Display::initialise() {
@@ -37,9 +42,49 @@ void Display::initialise() {
 }
 
 void Display::render() {
+  updateFlashState();
+  updateFrame();
   updateCursors();
   updateIndicators();
-  for (int row = 0; row < MATRIX_ROWS; ++ row) matrix.setRow(row, display[row].state ^ cursorMask[row].state);
+
+  for (int row = 0; row < MATRIX_ROWS; ++ row) {
+    if (frame.active) matrix.setRow(row, getFrameRow(row));
+    else matrix.setRow(row, display[row].state ^ cursorMask[row].state);
+  }
+}
+
+int Display::getFrameRow(int row) {
+  int frameRow = (frame.image >> row * MATRIX_ROWS) & 0xFF;
+  if (frame.clocked && !clock.active) frameRow = frameRow & frame.image;
+  return frameRow;
+}
+
+void Display::updateFlashState() {
+  unsigned long now = millis();
+  if ((flashState && (now - cursorTime) > FLASH_TIME_ON) || (!flashState && (now - cursorTime) > FLASH_TIME_OFF)) {
+    flashState = !flashState;
+    cursorTime = now;
+  }
+}
+
+void Display::updateFrame() {
+  if (frame.active) {
+    if (frame.time != 0 && (millis() - frame.start > frame.time)) {
+      frame.active = false;
+      frame.start = 0;
+    }
+  }
+}
+
+void Display::updateCursors() {
+  clear(cursorMask);
+  for (int cursor = 0; cursor < CURSORS; ++cursor) updateCursorMask(cursor);
+}
+
+void Display::updateCursorMask(int cursor) {
+    if(cursors[cursor].active) {
+      bitWrite(cursorMask[cursors[cursor].row].state, cursors[cursor].position, flashState);
+    }
 }
 
 void Display::updateIndicators() {
@@ -47,22 +92,6 @@ void Display::updateIndicators() {
   updateIndicator(reset);
   for(int track = 0; track <= TRACKS; ++track) updateIndicator(tracks[track]);
   updateTrackIndicator(activeTrack);
-}
-
-void Display::updateCursors() {
-  clear(cursorMask);
-  unsigned long now = millis();
-  if ((cursorState && (now - cursorTime) > FLASH_TIME_ON) || (!cursorState && (now - cursorTime) > FLASH_TIME_OFF)) {
-    cursorState = !cursorState;
-    cursorTime = now;
-  }
-  for (int cursor = 0; cursor < CURSORS; ++cursor) updateCursorMask(cursor);
-}
-
-void Display::updateCursorMask(int cursor) {
-    if(cursors[cursor].active) {
-      bitWrite(cursorMask[cursors[cursor].row].state, cursors[cursor].position, cursorState);
-    }
 }
 
 void Display::updateIndicator(Indicator& indicator) {
@@ -79,8 +108,8 @@ void Display::updateTrackIndicator(TrackIndicator& indicator) {
   if (indicator.active) {
     int row = row(indicator.track);
     setRows(row, ALL_OFF);
-    cursorMask[row].state = cursorState ? ALL_ON : ALL_OFF;
-    cursorMask[row + 1].state = cursorState ? ALL_ON : ALL_OFF;
+    cursorMask[row].state = flashState ? ALL_ON : ALL_OFF;
+    cursorMask[row + 1].state = flashState ? ALL_ON : ALL_OFF;
     if (indicator.start == 0 || (millis() - indicator.start > TRACK_INDICATOR_TIME)) {
       indicator.active = false;
       indicator.start = 0;
@@ -90,21 +119,6 @@ void Display::updateTrackIndicator(TrackIndicator& indicator) {
 
 void Display::showCursor(int track, bool visible) {
   cursors[track].active = visible;
-}
-
-void Display::drawProgrammedView(int track, int pattern) {
-  showCursor(track, true);
-  setRows(row(track), pattern);
-}
-
-void Display::drawEuclideanView(int track, int pattern) {
-  showCursor(track, false);
-  setRows(row(track), pattern);
-}
-
-void Display::drawOffsetView(int track, int pattern) {
-  showCursor(track, false);
-  setRows(row(track), pattern);
 }
 
 void Display::drawPlayView(int track, int position, int pattern, bool cursor) {
@@ -122,7 +136,26 @@ void Display::drawPlayView(int track, int position, int pattern, bool cursor) {
   // setRows(row(track), state);
 }
 
+void Display::drawProgrammedView(int track, int pattern) {
+  timeout();
+  showCursor(track, true);
+  setRows(row(track), pattern);
+}
+
+void Display::drawEuclideanView(int track, int pattern) {
+  timeout();
+  showCursor(track, false);
+  setRows(row(track), pattern);
+}
+
+void Display::drawOffsetView(int track, int pattern) {
+  timeout();
+  showCursor(track, false);
+  setRows(row(track), pattern);
+}
+
 void Display::drawLengthView(int track, int start, int end, bool active) {
+  timeout();
   setTrackCursor(track, active ? end : start);
   showCursor(track, true);
   int state = 0;
@@ -131,96 +164,60 @@ void Display::drawLengthView(int track, int start, int end, bool active) {
 }
 
 void Display::drawLengthView(int track, int length) {
+  timeout();
   drawLengthView(track, 0, length, true);
 }
 
-void Display::drawShuffleView(int track, int length) {
-  drawLengthView(track, 0, length, true);
+void Display::drawShuffleView(int track, int shuffle) {
+  showFrame(&SHUFFLE[shuffle]);
 }
 
 void Display::drawPlayModeView(int track, PlayMode mode) {
-  showCursor(track, false);
-  switch(mode) {
-    case PlayMode::Forward:
-      setRow(row(track), B00000111);
-      break;
-    case PlayMode::Backward:
-      setRow(row(track), B11100000);
-    break;
-    case PlayMode::Random:
-      setRow(row(track), B10100010);
-    break;
-    case PlayMode::Pendulum:
-      setRow(row(track), B11100111);
-    break;
-    break;
-  }
-  setRow(row(track) + 1, ALL_OFF);
+  showFrame(&PLAY_MODES[mode]);
 }
 
 void Display::drawOutModeView(int track, OutMode mode) {
-  showCursor(track, false);
-  switch(mode) {
-    case OutMode::Trigger:
-      setRow(row(track), B00000010);
-      setRow(row(track) + 1, B00000101);
-      break;
-    case OutMode::Clock:
-      setRow(row(track), B00001110);
-      setRow(row(track) + 1, B00010001);
-    break;
-    case OutMode::Gate:
-      setRow(row(track), B01111110);
-      setRow(row(track) + 1, B10000001);
-    break;
-  }
+  showFrame(&OUT_MODES[mode]);
 }
 
 void Display::drawPatternTypeView(int track, PatternType mode) {
-  showCursor(track, false);
-  switch(mode) {
-    case PatternType::Programmed:
-      setRow(row(track), ALL_ON);
-      setRow(row(track) + 1, ALL_OFF);
-      break;
-    case PatternType::Euclidean:
-      setRow(row(track), ALL_OFF);
-      setRow(row(track) + 1, ALL_ON);
-    break;
-  }
+  showFrame(&PATTERN_MODES[mode]);
 }
 
 void Display::drawDividerView(int track, int divider, DividerType type) {
-  showCursor(track, false);
-  byte state = 0;
-  bitSet(state, divider);
-  setRow(row(track), state);
   switch(type) {
     case Beat:
-      setRow(row(track) + 1, B00000001);
+      showFrame(&BEAT_DIVIDERS[divider]);
       break;
     case Triplet:
-      setRow(row(track) + 1, B00000111);
+      showFrame(&TRIPLET_DIVIDERS[divider]);
       break;
   }
 }
 
-void Display::drawMutationView(int track, int mutation, MutationSeed seed) {
-  showCursor(track, false);
-  byte state = 0;
-  bitSet(state, mutation);
-  setRow(row(track), state);
-  switch(seed) {
-    case Original:
-      setRow(row(track) + 1, B00000001);
-      break;
-    case Last:
-      setRow(row(track) + 1, B10000000);
-      break;
-    case LastInverted:
-      setRow(row(track) + 1, B01111111);
-      break;
-  }
+void Display::drawDividerTypeView(int track, DividerType type) {
+  showFrame(&DIVIDER_TYPES[type]);
+}
+
+void Display::drawMutationView(int track, int mutation) {
+  showFrame(&MUTATION_CHANCE[mutation]);
+}
+
+void Display::drawMutationSeedView(int track, MutationSeed seed) {
+  showFrame(&MUTATION_SEEDS[seed]);
+}
+
+void Display::drawClockSpeed(bool state) {
+  if(state) showClockedFrame(&CLOCK_STATE[state]);
+  else showFrame(&CLOCK_STATE[state]);
+}
+
+void Display::drawClockWidth(int width) {
+  showFrame(&CLOCK_WIDTH[width]);
+}
+
+void Display::drawOffbeatOutput(bool offBeat) {
+  showFrame(&OFFBEAT_OUTPUT[offBeat]);
 }
 
 void Display::setRows(int row, int state) {
@@ -238,6 +235,11 @@ void Display::setRow(int row, byte state) {
 
 void Display::clear() {
   clear(display);
+  timeout();
+}
+
+void Display::timeout() {
+  frame.active = false;
 }
 
 void Display::clear(DisplayRow rows[]) {
@@ -269,10 +271,31 @@ void Display::showIndicator(Indicator& indicator) {
     indicator.start = millis();
 }
 
+void Display::showFrame(const uint64_t *image) {
+  showFrame(image, UNLIMITED, false);
+}
+
+void Display::showClockedFrame(const uint64_t *image) {
+  showFrame(image, UNLIMITED, true);
+}
+
+void Display::showTimedFrame(const uint64_t *image, unsigned long time) {
+  showFrame(image, time, false);
+}
+
+void Display::showFrame(const uint64_t *image, unsigned long time, bool clocked) {
+  memcpy_P(&frame.image, image, MATRIX_ROWS);
+  frame.time = time;
+  frame.start = millis();
+  frame.active = true;
+  frame.clocked = clocked;
+}
+
 void Display::indicateMode(int mode) {
   byte state = 0;
   bitSet(state, mode);
   setRow(MODE_ROW, state);
+  showTimedFrame(&MODES[mode], MODE_FRAME_TIME);
 }
 
 void Display::setTrackCursor(int track, int position) {
@@ -297,33 +320,16 @@ void Display::setRange(int &value, int start, int end, int bit) {
 
 void Display::simley() {
   for (int repeat = 0; repeat < 3; ++ repeat) {
-    showInverseSmileyFace();
+    showFrame(&INVERSE_SMILE);
+    render();
     delay(100);
-    showSmileyFace();
+    showFrame(&SMILE);
+    render();
     delay(100);
   }
-  showInverseSmileyFace();
+  showFrame(&INVERSE_SMILE);
+  render();
   delay(100);
   clear();
-  render();
-}
-
-void Display::showSmileyFace() {
-  for (int row = 0; row < MATRIX_ROWS; ++ row) {
-    if (row == 0 || row == 4 || row == 7) setRow(row, ALL_OFF);
-    if (row == 1 || row == 2 || row == 3) setRow(row, B00100100);
-    if (row == 5) setRow(row, B01000010);
-    if (row == 6) setRow(row, B00111100);
-  }
-  render();
-}
-
-void Display::showInverseSmileyFace() {
-  for (int row = 0; row < MATRIX_ROWS; ++ row) {
-    if (row == 0 || row == 4 || row == 7) setRow(row, ALL_ON);
-    if (row == 1 || row == 2 || row == 3) setRow(row, B11011011);
-    if (row == 5) setRow(row, B10111101);
-    if (row == 6) setRow(row, B11000011);
-  }
   render();
 }

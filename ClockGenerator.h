@@ -10,6 +10,9 @@ public:
   void setSpeed(int offset);
   void setWidth(int offset);
   void setMulitplier(int offset);
+  int getSpeed();
+  int getWidth();
+  int getMulitplier();
   void start();
   void stop();
   void reset();

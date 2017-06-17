@@ -48,16 +48,5 @@ Signal Shuffle::shuffleClock(int track, int shuffle) {
       state.newCycle[track] = false;
     }
   }
-
-  switch(signal) {
-    case Signal::Low:
-      break;
-    case Signal::Rising:
-      break;
-    case Signal::High:
-      break;
-    case Signal::Falling:
-      break;
-  }
   return signal;
 }

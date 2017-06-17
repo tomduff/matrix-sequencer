@@ -9,7 +9,7 @@
 #include "ClockGenerator.h"
 #include "Shuffle.h"
 
-#define EDIT_WAIT 7500
+#define EDIT_WAIT 5000
 #define CLOCK_WAIT 5000
 #define EDIT_MODES 4
 #define EDIT_TRACKS 3
@@ -23,9 +23,15 @@ enum EditAction {
   EditPlayMode,
   EditOutMode,
   EditDivider,
+  EditDividerType,
   EditPatternType,
   EditShuffle,
-  EditMutation
+  EditMutation,
+  EditMutationSeed,
+  EditClockSpeed,
+  EditClockWidth,
+  EditClockState,
+  EditOffBeatOutput
 };
 
 struct EditMode {
@@ -46,7 +52,7 @@ Tracks tracks = Tracks();
 EditMode editModes[EDIT_MODES];
 ClockGenerator clockGenerator = ClockGenerator();
 Shuffle shuffle = Shuffle();
-int edit = 0;
+int edit = -1;
 int cursor = 0;
 int active = 0;
 EditAction action = EditAction::NoAction;
@@ -66,31 +72,30 @@ void setup() {
   reset.initialise();
   for(int track = 0; track < EDIT_TRACKS; ++track) outs[track].initialise();
   clearEditAction();
+  display.indicateMode(edit);
   handleButtonHeld(Control::One);
 }
 
 void loop() {
-  now = millis();
   handleReset(reset.signal());
 
-  if(!clockGenerator.isRunning()) handleClock(clock.signal());
+  if (!clockGenerator.isRunning()) handleClock(clock.signal());
   else handleClock(clockGenerator.tick());
 
   handleEncoderEvent(encoders.event());
   handleButtonEvent(buttons.event());
 
-  if (action == EditAction::NoAction || lastEdit == 0 || (now - lastEdit > EDIT_WAIT)) {
-    clearEditAction();
+  if (lastEdit != 0 && (millis() - lastEdit) > EDIT_WAIT) {
+      clearEditAction();
   }
 
   drawTracks();
-  display.indicateMode(edit);
   display.render();
 }
 
 void drawTracks() {
   for(int track = 0; track < EDIT_TRACKS; ++track) {
-    if(track != active || action == EditAction::NoAction) display.drawPlayView(track, tracks.getPosition(track), tracks.getPattern(track), clocked);
+    if (track != active || action == EditAction::NoAction) display.drawPlayView(track, tracks.getPosition(track), tracks.getPattern(track), clocked);
   }
 }
 
@@ -113,7 +118,7 @@ void handleClock(Signal signal) {
     lastClock = now;
     display.indicateClock();
   }
-  for(int track = 0; track < EDIT_TRACKS; ++track) handleStep(track);
+  for (int track = 0; track < EDIT_TRACKS; ++track) handleStep(track);
   if (offBeatOut) handleStep(OFF_BEAT);
   else outs[OFF_BEAT].signal(signal, OutMode::Clock, 1);
 }
@@ -121,13 +126,13 @@ void handleClock(Signal signal) {
 void handleStep(int track) {
   int step = tracks.getStep(track);
   Signal signal = shuffle.tick(track, tracks.getShuffle(track));
-  if(!tracks.getStepped(track) && Signal::Rising) signal = Signal::Low;
+  if (!tracks.getStepped(track) && Signal::Rising) signal = Signal::Low;
   int output = outs[track].signal(signal, tracks.getOutMode(track), step);
   if (output) display.indicateTrack(track);
 }
 
 void handleEncoderEvent(EncoderEvent event) {
-  if (event.control != Control::NoControl) lastEdit = now;
+  if (event.control != Control::NoControl) lastEdit = millis();
   switch(event.control) {
     case Control::One:
       editModes[edit].oneRotate(event.state);
@@ -151,11 +156,11 @@ void handleButtonEvent(ButtonEvent event) {
 void handleButtonClick(Control control) {
   switch(control) {
     case Control::One:
-      lastEdit = now;
+      lastEdit = millis();
       editModes[edit].oneClick();
       break;
   case Control::Two:
-      lastEdit = now;
+      lastEdit = millis();
       editModes[edit].twoClick();
       break;
     case Control::Three:
@@ -170,6 +175,7 @@ void nextEditMode() {
   ++edit;
   Utilities::cycle(edit, 0, EDIT_MODES - 1);
   clearEditAction();
+  display.indicateMode(edit);
 }
 
 void handleButtonHeld(Control control) {
@@ -188,6 +194,7 @@ void clearEditAction() {
   tracks.save();
   lastEdit = 0;
   action = EditAction::NoAction;
+  display.timeout();
 }
 
 void moveCursor(int Offset, int max) {
@@ -283,13 +290,13 @@ void dividerEdit(int change) {
 void mutationEdit(int change) {
   if (action != EditAction::EditMutation) setEditAction(EditAction::EditMutation);
   else tracks.setMutation(active, change);
-  display.drawMutationView(active, tracks.getMutation(active), tracks.getMutationSeed(active));
+  display.drawMutationView(active, tracks.getMutation(active));
 }
 
 void switchDividerType() {
-  if (action != EditAction::EditDivider) setEditAction(EditAction::EditDivider);
+  if (action != EditAction::EditDividerType) setEditAction(EditAction::EditDividerType);
   else tracks.nextDividerType(active);
-  display.drawDividerView(active, tracks.getDivider(active), tracks.getDividerType(active));
+  display.drawDividerTypeView(active, tracks.getDividerType(active));
 }
 
 void switchPatternType() {
@@ -299,9 +306,9 @@ void switchPatternType() {
 }
 
 void switchMutationSeed() {
-  if (action != EditAction::EditMutation) setEditAction(EditAction::EditMutation);
+  if (action != EditAction::EditMutationSeed) setEditAction(EditAction::EditMutationSeed);
   else tracks.nextMutationSeed(active);
-  display.drawMutationView(active, tracks.getMutation(active), tracks.getMutationSeed(active));
+  display.drawMutationSeedView(active, tracks.getMutationSeed(active));
 }
 
 void shuffleEdit(int change) {
@@ -311,25 +318,37 @@ void shuffleEdit(int change) {
 }
 
 void clockSpeedEdit(int change) {
-  clockGenerator.setSpeed(change);
+  if (action != EditAction::EditClockSpeed) setEditAction(EditAction::EditClockSpeed);
+  else clockGenerator.setSpeed(change);
+  display.drawClockSpeed(clockGenerator.isRunning());
 }
 
 void clockWidthEdit(int change) {
-  clockGenerator.setWidth(change);
+  if (action != EditAction::EditClockWidth) setEditAction(EditAction::EditClockWidth);
+  else clockGenerator.setWidth(change);
+  display.drawClockWidth(clockGenerator.getWidth());
 }
 
 void clockMulitplierEdit(int change) {
-  clockGenerator.setMulitplier(change);
+  if (action != EditAction::EditClockSpeed) setEditAction(EditAction::EditClockSpeed);
+  else clockGenerator.setMulitplier(change);
+  display.drawClockSpeed(clockGenerator.isRunning());
 }
 
 void startStopClock() {
-  if(clockGenerator.isRunning()) clockGenerator.stop();
-  else clockGenerator.start();
-  clocked = clockGenerator.isRunning();
+  if (action != EditAction::EditClockSpeed) setEditAction(EditAction::EditClockSpeed);
+  else {
+    if(clockGenerator.isRunning()) clockGenerator.stop();
+    else clockGenerator.start();
+    clocked = clockGenerator.isRunning();
+  }
+  display.drawClockSpeed(clockGenerator.isRunning());
 }
 
 void switchOffBeatOut() {
-  offBeatOut = !offBeatOut;
+  if (action != EditAction::EditOffBeatOutput) setEditAction(EditAction::EditOffBeatOutput);
+  else offBeatOut = !offBeatOut;
+  display.drawOffbeatOutput(offBeatOut);
 }
 
 void initialiseEditModes() {

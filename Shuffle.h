@@ -5,8 +5,6 @@
 #include "Io.h"
 #include <Encoder.h>
 
-#include "Matrix.h"
-
 struct ShuffleState {
   unsigned long lastClock;
   Signal clockSignal;
@@ -26,7 +24,6 @@ private:
   ShuffleState state;
   Signal shuffleClock(int track, int shuffle);
   void newCycle();
-  Matrix matrix = Matrix();
 };
 
 #endif
