@@ -8,25 +8,25 @@
 #include <stdint.h>
 
 const uint64_t MODES[] PROGMEM = {
-  0x0001001818181800,   // I Pattern Mode
-  0x0002006666666600,   // II Track Mode
-  0x000400dbdbdbdb00,   // III Modifiers Mode
-  0x00080073fbdbdb00,   // IV Clock Mode
-  0x001000187e666600,   // V Reset Mode
-  0x002000cedfdbdb00    // VI System Mode
+  0x0001000000001818,   // Pattern Mode
+  0x0002001818001818,   // Track Mode
+  0x0004001818006666,   // Modifiers Mode
+  0x0008006666006666,   // Clock Mode
+  0x001000666600dbdb,   // Reset Mode
+  0x002000dbdb00dbdb    // System Mode
 };
 
 const uint64_t PLAY_MODES[] PROGMEM = {
   0x0010307fff7f3010,   // Forward
   0x00080cfefffe0c08,   // Backwards
   0x0081c3e7ffe7c381,   // Forwards Backwards
-  0x0066361e3e66663e   // R (Random)
+  0x0066361e3e66663e    // R (Random)
 };
 
 const uint64_t OUT_MODES[] PROGMEM = {
   0x00ff020202020202,   // Trigger
   0x00db4a4a4a4a4a6e,   // Clock Variable
-  0x00c342424242427e   // Gate
+  0x00c342424242427e    // Gate
 };
 
 const uint64_t DIVIDER_TYPES[] PROGMEM = {
@@ -57,13 +57,117 @@ const uint64_t TRIPLET_DIVIDERS[] PROGMEM {
 
 const uint64_t MUTATION_SEEDS[] PROGMEM = {
   0x003c66666666663c,   // O (Original)
-  0x00c6c6c6d6feeec6,   // M (Mutated)
-  0x003c18181818183c   // I (Inverted Mutated)
+  0x003c66060606663c,   // C (Current)
+  0x003c18181818183c    // I (Inverse Current)
 };
 
 const uint64_t PATTERN_MODES[] PROGMEM = {
   0x0006063e6666663e,   // P (Programmed)
-  0x007e06063e06067e   // E (Euclidean)
+  0x007e06063e06067e    // E (Euclidean)
+};
+
+const uint64_t SHUFFLE[] PROGMEM = {
+  0x0000000000000000,
+  0x0000000000000001,
+  0x0000000000000101,
+  0x0000000000000301,
+  0x0000000000020301,
+  0x0000000000060301,
+  0x0000000004060301,
+  0x000000000c060301,
+  0x000000080c060301,
+  0x000000180c060301,
+  0x000010180c060301,
+  0x000030180c060301,
+  0x002030180c060301,
+  0x006030180c060301,
+  0x406030180c060301,
+  0xc06030180c060301
+};
+
+const uint64_t MUTATION_CHANCE[] PROGMEM = {
+  0x0000000000000000,
+  0x0100000000000000,
+  0x0300000000000000,
+  0x0302000000000000,
+  0x0702000000000000,
+  0x0706000000000000,
+  0x0706040000000000,
+  0x0f06040000000000,
+  0x0f0e040000000000,
+  0x0f0e0c0000000000,
+  0x0f0e0c0800000000,
+  0x1f0e0c0800000000,
+  0x1f1e0c0800000000,
+  0x1f1e1c0800000000,
+  0x1f1e1c1800000000,
+  0x1f1e1c1810000000,
+  0x3f1e1c1810000000,
+  0x3f3e1c1810000000,
+  0x3f3e3c1810000000,
+  0x3f3e3c3810000000,
+  0x3f3e3c3830000000,
+  0x3f3e3c3830200000,
+  0x7f3e3c3830200000,
+  0x7f7e3c3830200000,
+  0x7f7e7c3830200000,
+  0x7f7e7c7830200000,
+  0x7f7e7c7870200000,
+  0x7f7e7c7870600000,
+  0x7f7e7c7870604000,
+  0xff7e7c7870604000,
+  0xfffe7c7870604000,
+  0xfffefc7870604000,
+  0xfffefcf870604000,
+  0xfffefcf8f0604000,
+  0xfffefcf8f0e04000,
+  0xfffefcf8f0e0c000,
+  0xfffefcf8f0e0c080,
+  0xfffefcf8f0e0c080
+};
+
+const uint64_t CLOCK_WIDTH[] PROGMEM = {
+  0x00ff020202020200,
+  0x00ff020202020600,
+  0x00ff020202060600,
+  0x00ff020206060600,
+  0x00ff020606060600,
+  0x00ff060606060600,
+  0x00ff060606060e00,
+  0x00ff0606060a0e00,
+  0x00ff06060a0a0e00,
+  0x00ff060a0a0a0e00,
+  0x00ff0a0a0a0a0e00,
+  0x00fb0a0a0a0a0e00,
+  0x00fb0a0a0a0a1e00,
+  0x00fb0a0a0a121e00,
+  0x00fb0a0a12121e00,
+  0x00fb0a1212121e00,
+  0x00fb121212121e00,
+  0x00f3121212121e00,
+  0x00f3121212123e00,
+  0x00f3121212223e00,
+  0x00f3121222223e00,
+  0x00f3122222223e00,
+  0x00f3222222223e00,
+  0x00e3222222223e00,
+  0x00e3222222223e00,
+  0x00e3222222227e00,
+  0x00e3222222427e00,
+  0x00e3222242427e00,
+  0x00e3224242427e00,
+  0x00e3424242427e00,
+  0x00c3424242427e00
+};
+
+const uint64_t CLOCK_STATE[] PROGMEM = {
+  0x00003c3c3c3c0000,
+  0x000c1c3c3c1c0c00
+};
+
+const uint64_t OFFBEAT_OUTPUT[] PROGMEM = {
+  0x3c4281998989423c,
+  0xffe7e7e7e7e7e7ff
 };
 
 const uint64_t SMILE PROGMEM = 0x003c420024242400;
@@ -74,6 +178,7 @@ struct DisplayFrame {
   unsigned long time;
   unsigned long start;
   bool active;
+  bool clocked;
 };
 
 struct DisplayRow {
@@ -120,6 +225,9 @@ public:
   void drawPatternTypeView(int track, PatternType mode);
   void drawMutationView(int track, int mutation);
   void drawMutationSeedView(int track, MutationSeed seed);
+  void drawClockSpeed(bool state);
+  void drawClockWidth(int width);
+  void drawOffbeatOutput(bool offBeat);
   void setTrackCursor(int track, int position);
   void indicateReset();
   void indicateClock();
@@ -137,6 +245,7 @@ private:
   bool hasCursorMoved();
   void updateCursors();
   void updateFrame();
+  int getFrameRow(int row);
   void updateCursorMask(int cursor);
   void simley();
   void showSmileyFace();
@@ -147,7 +256,9 @@ private:
   void setRows(int row, int state);
   void setLed(int row, int column, bool state);
   void showFrame(const uint64_t *image);
-  void showFrame(const uint64_t *image, unsigned long time);
+  void showClockedFrame(const uint64_t *image);
+  void showTimedFrame(const uint64_t *image, unsigned long time);
+  void showFrame(const uint64_t *image, unsigned long time, bool clocked);
   DisplayRow display[8];
   DisplayRow cursorMask[8];
   DisplayFrame frame;

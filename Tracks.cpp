@@ -3,13 +3,13 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 
-#define CONFIG_VERSION 109
+#define CONFIG_VERSION 105
 #define CONFIG_ADDRESS 0
 #define MAX_STEP_INDEX 15
 #define MAX_BEAT_DIVIDER 6
 #define MAX_TRIPLET_DIVIDER 7
 #define MAX_SHUFFLE MAX_STEP_INDEX
-#define MAX_MUTATION MAX_STEP_INDEX
+#define MAX_MUTATION 37
 #define MUTATION_FACTOR 100
 #define TRACKS 3
 
@@ -189,7 +189,6 @@ int Tracks::getStepped(int track) {
 int Tracks::getMutation(int track) {
   return track < TRACKS ? tracks[track].mutation: getMutation(0);
 }
-
 
 MutationSeed Tracks::getMutationSeed(int track){
   return track < TRACKS ? tracks[track].mutationSeed: getMutationSeed(0);

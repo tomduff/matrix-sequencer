@@ -27,7 +27,11 @@ enum EditAction {
   EditPatternType,
   EditShuffle,
   EditMutation,
-  EditMutationSeed
+  EditMutationSeed,
+  EditClockSpeed,
+  EditClockWidth,
+  EditClockState,
+  EditOffBeatOutput
 };
 
 struct EditMode {
@@ -314,25 +318,37 @@ void shuffleEdit(int change) {
 }
 
 void clockSpeedEdit(int change) {
-  clockGenerator.setSpeed(change);
+  if (action != EditAction::EditClockSpeed) setEditAction(EditAction::EditClockSpeed);
+  else clockGenerator.setSpeed(change);
+  display.drawClockSpeed(clockGenerator.isRunning());
 }
 
 void clockWidthEdit(int change) {
-  clockGenerator.setWidth(change);
+  if (action != EditAction::EditClockWidth) setEditAction(EditAction::EditClockWidth);
+  else clockGenerator.setWidth(change);
+  display.drawClockWidth(clockGenerator.getWidth());
 }
 
 void clockMulitplierEdit(int change) {
-  clockGenerator.setMulitplier(change);
+  if (action != EditAction::EditClockSpeed) setEditAction(EditAction::EditClockSpeed);
+  else clockGenerator.setMulitplier(change);
+  display.drawClockSpeed(clockGenerator.isRunning());
 }
 
 void startStopClock() {
-  if(clockGenerator.isRunning()) clockGenerator.stop();
-  else clockGenerator.start();
-  clocked = clockGenerator.isRunning();
+  if (action != EditAction::EditClockSpeed) setEditAction(EditAction::EditClockSpeed);
+  else {
+    if(clockGenerator.isRunning()) clockGenerator.stop();
+    else clockGenerator.start();
+    clocked = clockGenerator.isRunning();
+  }
+  display.drawClockSpeed(clockGenerator.isRunning());
 }
 
 void switchOffBeatOut() {
-  offBeatOut = !offBeatOut;
+  if (action != EditAction::EditOffBeatOutput) setEditAction(EditAction::EditOffBeatOutput);
+  else offBeatOut = !offBeatOut;
+  display.drawOffbeatOutput(offBeatOut);
 }
 
 void initialiseEditModes() {

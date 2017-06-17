@@ -19,13 +19,13 @@ ButtonEvent Buttons::event() {
   ButtonEvent event = ButtonEvent{Control::NoControl, ButtonState::Released};
   Control button = readButton();
   ButtonState state = ButtonState::Released;
-  if(button != Control::NoControl) {
+  if (button != Control::NoControl) {
     if (button != oldButton) {
       holdStart = millis();
     } else if (button == oldButton && isHeld()) {
       state = ButtonState::Held;
       event.control = button;
-      if(oldState != ButtonState::Held) {
+      if (oldState != ButtonState::Held) {
         event.state = state;
       }
     }

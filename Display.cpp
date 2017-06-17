@@ -48,9 +48,15 @@ void Display::render() {
   updateIndicators();
 
   for (int row = 0; row < MATRIX_ROWS; ++ row) {
-    if (frame.active) matrix.setRow(row, (frame.image >> row * MATRIX_ROWS) & 0xFF);
+    if (frame.active) matrix.setRow(row, getFrameRow(row));
     else matrix.setRow(row, display[row].state ^ cursorMask[row].state);
   }
+}
+
+int Display::getFrameRow(int row) {
+  int frameRow = (frame.image >> row * MATRIX_ROWS) & 0xFF;
+  if (frame.clocked && !clock.active) frameRow = frameRow & frame.image;
+  return frameRow;
 }
 
 void Display::updateFlashState() {
@@ -162,33 +168,23 @@ void Display::drawLengthView(int track, int length) {
   drawLengthView(track, 0, length, true);
 }
 
-void Display::drawShuffleView(int track, int length) {
-  timeout();
-  drawLengthView(track, 0, length, true);
+void Display::drawShuffleView(int track, int shuffle) {
+  showFrame(&SHUFFLE[shuffle]);
 }
 
 void Display::drawPlayModeView(int track, PlayMode mode) {
-  timeout();
-  showCursor(track, false);
   showFrame(&PLAY_MODES[mode]);
 }
 
 void Display::drawOutModeView(int track, OutMode mode) {
-  timeout();
-  showCursor(track, false);
   showFrame(&OUT_MODES[mode]);
 }
 
 void Display::drawPatternTypeView(int track, PatternType mode) {
-  timeout();
-  showCursor(track, false);
   showFrame(&PATTERN_MODES[mode]);
 }
 
 void Display::drawDividerView(int track, int divider, DividerType type) {
-  timeout();
-  showCursor(track, false);
-  //showFrame(&DIVIDER_TYPES[type]);
   switch(type) {
     case Beat:
       showFrame(&BEAT_DIVIDERS[divider]);
@@ -200,23 +196,28 @@ void Display::drawDividerView(int track, int divider, DividerType type) {
 }
 
 void Display::drawDividerTypeView(int track, DividerType type) {
-  timeout();
-  showCursor(track, false);
   showFrame(&DIVIDER_TYPES[type]);
 }
 
 void Display::drawMutationView(int track, int mutation) {
-  timeout();
-  showCursor(track, false);
-  int state = 0;
-  bitSet(state, mutation);
-  setRows(row(track), state);
+  showFrame(&MUTATION_CHANCE[mutation]);
 }
 
 void Display::drawMutationSeedView(int track, MutationSeed seed) {
-  timeout();
-  showCursor(track, false);
   showFrame(&MUTATION_SEEDS[seed]);
+}
+
+void Display::drawClockSpeed(bool state) {
+  if(state) showClockedFrame(&CLOCK_STATE[state]);
+  else showFrame(&CLOCK_STATE[state]);
+}
+
+void Display::drawClockWidth(int width) {
+  showFrame(&CLOCK_WIDTH[width]);
+}
+
+void Display::drawOffbeatOutput(bool offBeat) {
+  showFrame(&OFFBEAT_OUTPUT[offBeat]);
 }
 
 void Display::setRows(int row, int state) {
@@ -271,21 +272,30 @@ void Display::showIndicator(Indicator& indicator) {
 }
 
 void Display::showFrame(const uint64_t *image) {
-  showFrame(image, UNLIMITED);
+  showFrame(image, UNLIMITED, false);
 }
 
-void Display::showFrame(const uint64_t *image, unsigned long time) {
+void Display::showClockedFrame(const uint64_t *image) {
+  showFrame(image, UNLIMITED, true);
+}
+
+void Display::showTimedFrame(const uint64_t *image, unsigned long time) {
+  showFrame(image, time, false);
+}
+
+void Display::showFrame(const uint64_t *image, unsigned long time, bool clocked) {
   memcpy_P(&frame.image, image, MATRIX_ROWS);
   frame.time = time;
   frame.start = millis();
   frame.active = true;
+  frame.clocked = clocked;
 }
 
 void Display::indicateMode(int mode) {
   byte state = 0;
   bitSet(state, mode);
   setRow(MODE_ROW, state);
-  showFrame(&MODES[mode], MODE_FRAME_TIME);
+  showTimedFrame(&MODES[mode], MODE_FRAME_TIME);
 }
 
 void Display::setTrackCursor(int track, int position) {
