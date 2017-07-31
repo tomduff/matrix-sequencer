@@ -17,12 +17,13 @@ struct EncoderEvent {
 
 class Encoders : public Controller {
 public:
-  Encoders();
+  Encoders(bool reverse);
   virtual void initialise();
   EncoderEvent event();
 private:
   Encoder one, two, three;
   EncoderState read(Encoder& encoder);
+  bool reversed;
 };
 
 #endif

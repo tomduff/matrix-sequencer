@@ -7,8 +7,8 @@
 #define THREE_A 5
 #define THREE_B 6
 
-Encoders::Encoders()
-  : one(ONE_A, ONE_B), two(TWO_A, TWO_B), three(THREE_A, THREE_B) {
+Encoders::Encoders(bool reverse)
+  : one(ONE_A, ONE_B), two(TWO_A, TWO_B), three(THREE_A, THREE_B), reversed(reverse) {
 }
 
 void Encoders::initialise() {
@@ -40,7 +40,6 @@ EncoderEvent Encoders::event() {
       }
     }
   }
-
   return event;
 }
 
@@ -48,12 +47,12 @@ EncoderState Encoders::read(Encoder &encoder) {
   EncoderState result = EncoderState::Stopped;
   int reading = encoder.read();
   if (reading < EncoderState::Decrement) {
-    result = EncoderState::Decrement;
+    result = !reversed ?  EncoderState::Decrement : EncoderState::Increment;
     encoder.write(EncoderState::Stopped);
   }
   else if (reading > EncoderState::Increment) {
-    result = EncoderState::Increment;
+    result = !reversed ?  EncoderState::Increment : EncoderState::Decrement;
     encoder.write(EncoderState::Stopped);
   }
-  return result;
+  return (EncoderState) result;
 }

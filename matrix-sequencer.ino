@@ -15,6 +15,9 @@
 #define EDIT_TRACKS 3
 #define OFF_BEAT 3
 
+// hardware config
+#define ENCODERS_REVERSED 1
+
 enum EditAction {
   NoAction,
   EditLength,
@@ -43,7 +46,7 @@ struct EditMode {
 };
 
 Display display = Display();
-Encoders encoders = Encoders();
+Encoders encoders = Encoders(ENCODERS_REVERSED);
 Buttons buttons = Buttons();
 Input clock = Input(0);
 Input reset = Input(1);
